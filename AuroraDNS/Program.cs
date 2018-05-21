@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
+using MojoUnity;
+
+// ReSharper disable UnusedParameter.Local
+#pragma warning disable 1998
 
 namespace AuroraDNS
 {
@@ -44,10 +43,10 @@ namespace AuroraDNS
                 {
                     foreach (DnsQuestion dnsQuestion in query.Questions)
                     {
-                        Console.WriteLine(clientAddress + " : " +dnsQuestion.Name);
+                        Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
                         response.ReturnCode = ReturnCode.NoError;
-                        //string resolvedIp = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name);
-                        ARecord aRecord = new ARecord(dnsQuestion.Name, 36000, IPAddress.Parse("1.1.1.1"));
+                        string resolvedIp = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
+                        ARecord aRecord = new ARecord(dnsQuestion.Name, 36000, IPAddress.Parse(resolvedIp));
                         response.AnswerRecords.Add(aRecord);
                     }
                 }
@@ -56,9 +55,19 @@ namespace AuroraDNS
             e.Response = response;
         }
 
-        private string ResolveOverHttps(string ClientIpAddress, string DomainName)
+        private static string ResolveOverHttps(string ClientIpAddress, string DomainName)
         {
-            return "";
+            string dnsStr = new WebClient().DownloadString(
+                "https://cloudflare-dns.com/dns-query?ct=application/dns-json" +
+                $"&name={DomainName}&type=A&edns_client_subnet={ClientIpAddress}");
+            JsonValue dnsAnswerJson = Json.Parse(dnsStr).AsObjectGet("Answer");
+            string ipAnswerStr = dnsAnswerJson.AsArrayGet(0).AsObjectGetString("data");
+            return IsIp(ipAnswerStr) ? ipAnswerStr : ResolveOverHttps(ClientIpAddress, ipAnswerStr);
+        }
+
+        private static bool IsIp(string ip)
+        {
+            return Regex.IsMatch(ip, @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$");
         }
     }
 }
