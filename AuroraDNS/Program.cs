@@ -10,6 +10,13 @@ using MojoUnity;
 
 namespace AuroraDNS
 {
+    public class ADns
+    {
+        public string domainName;
+        public string answerAddr;
+        public int ttl;
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -45,24 +52,29 @@ namespace AuroraDNS
                     {
                         Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
                         response.ReturnCode = ReturnCode.NoError;
-                        string resolvedIp = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
-                        ARecord aRecord = new ARecord(dnsQuestion.Name, 36000, IPAddress.Parse(resolvedIp));
+                        ADns resolvedDns = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
+                        ARecord aRecord = new ARecord(dnsQuestion.Name, resolvedDns.ttl,
+                            IPAddress.Parse(resolvedDns.answerAddr));
                         response.AnswerRecords.Add(aRecord);
                     }
                 }
             }
 
             e.Response = response;
+
         }
 
-        private static string ResolveOverHttps(string ClientIpAddress, string DomainName)
+        private static ADns ResolveOverHttps(string ClientIpAddress, string DomainName)
         {
             string dnsStr = new WebClient().DownloadString(
-                "https://cloudflare-dns.com/dns-query?ct=application/dns-json" +
+                "https://1.1.1.1/dns-query?ct=application/dns-json" +
                 $"&name={DomainName}&type=A&edns_client_subnet={ClientIpAddress}");
-            JsonValue dnsAnswerJson = Json.Parse(dnsStr).AsObjectGet("Answer");
-            string ipAnswerStr = dnsAnswerJson.AsArrayGet(0).AsObjectGetString("data");
-            return IsIp(ipAnswerStr) ? ipAnswerStr : ResolveOverHttps(ClientIpAddress, ipAnswerStr);
+            JsonValue dnsAnswerJson = Json.Parse(dnsStr).AsObjectGet("Answer").AsArrayGet(0);
+            ADns aDns = new ADns();
+            aDns.answerAddr = dnsAnswerJson.AsObjectGetString("data");
+            aDns.domainName = dnsAnswerJson.AsObjectGetString("name");
+            aDns.ttl = dnsAnswerJson.AsObjectGetInt("TTL");
+            return !IsIp(aDns.answerAddr) ? ResolveOverHttps(ClientIpAddress, aDns.answerAddr) : aDns;
         }
 
         private static bool IsIp(string ip)
