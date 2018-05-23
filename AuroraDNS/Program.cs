@@ -18,15 +18,16 @@ namespace AuroraDNS
         public int ttl;
     }
 
-    class Program
+    static class Program
     {
         static void Main(string[] args)
         {
-            using (DnsServer server = new DnsServer(IPAddress.Any, 10, 10))
+            using (DnsServer dnsServer = new DnsServer(IPAddress.Any, 10, 10))
             {
-                server.QueryReceived += ServerOnQueryReceived;
-                server.Start();
-                Console.WriteLine("press any key to stop dns server");
+                dnsServer.QueryReceived += ServerOnQueryReceived;
+                dnsServer.Start();
+                Console.WriteLine("AuroraDNS Server Running");
+                Console.WriteLine("Press any key to stop dns server");
                 Console.ReadLine();
             }
         }
@@ -34,9 +35,8 @@ namespace AuroraDNS
         private static async Task ServerOnQueryReceived(object sender, QueryReceivedEventArgs e)
         {
             IPAddress clientAddress = e.RemoteEndpoint.Address;
-            DnsMessage query = e.Query as DnsMessage;
 
-            if (query == null)
+            if (!(e.Query is DnsMessage query))
                 return;
 
             DnsMessage response = query.CreateResponseInstance();
@@ -78,10 +78,12 @@ namespace AuroraDNS
             List<ADns> aDnsList = new List<ADns>();
             foreach (var itemJsonValue in dnsAnswerJsonList)
             {
-                ADns aDns = new ADns();
-                aDns.answerAddr = itemJsonValue.AsObjectGetString("data");
-                aDns.domainName = itemJsonValue.AsObjectGetString("name");
-                aDns.ttl = itemJsonValue.AsObjectGetInt("TTL");
+                ADns aDns = new ADns
+                {
+                    answerAddr = itemJsonValue.AsObjectGetString("data"),
+                    domainName = itemJsonValue.AsObjectGetString("name"),
+                    ttl = itemJsonValue.AsObjectGetInt("TTL")
+                };
                 aDnsList.Add(aDns);
             }
 
