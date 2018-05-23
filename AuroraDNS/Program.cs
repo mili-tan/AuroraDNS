@@ -54,9 +54,12 @@ namespace AuroraDNS
                         Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
                         response.ReturnCode = ReturnCode.NoError;
                         List<ADns> resolvedDnsList = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
-                        ARecord aRecord = new ARecord(dnsQuestion.Name, resolvedDnsList[0].ttl,
-                            IPAddress.Parse(resolvedDnsList[0].answerAddr));
-                        response.AnswerRecords.Add(aRecord);
+                        foreach (var dnsItem in resolvedDnsList)
+                        {
+                            ARecord aRecord = new ARecord(dnsQuestion.Name, dnsItem.ttl,
+                                IPAddress.Parse(dnsItem.answerAddr));
+                            response.AnswerRecords.Add(aRecord);
+                        }
                     }
                 }
             }
@@ -68,7 +71,7 @@ namespace AuroraDNS
         private static List<ADns> ResolveOverHttps(string ClientIpAddress, string DomainName)
         {
             string dnsStr = new WebClient().DownloadString(
-                "https://1.1.1.1/dns-query?ct=application/dns-json" +
+                "https://1.0.0.1/dns-query?ct=application/dns-json" +
                 $"&name={DomainName}&type=A&edns_client_subnet={ClientIpAddress}");
             List<JsonValue> dnsAnswerJsonList = Json.Parse(dnsStr).AsObjectGetArray("Answer");
 
