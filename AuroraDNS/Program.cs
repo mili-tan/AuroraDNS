@@ -12,12 +12,6 @@ using MojoUnity;
 
 namespace AuroraDNS
 {
-    public class ADns
-    {
-        public string domainName;
-        public string answerAddr;
-        public int ttl;
-    }
 
     static class Program
     {
@@ -54,14 +48,11 @@ namespace AuroraDNS
                     {
                         Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
                         response.ReturnCode = ReturnCode.NoError;
-                        List<ADns> resolvedDnsList = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
-                        foreach (var dnsItem in resolvedDnsList)
-                        {
-                            ARecord aRecord = new ARecord(
-                                DomainName.Parse(dnsItem.domainName), 
-                                dnsItem.ttl,IPAddress.Parse(dnsItem.answerAddr));
-                            response.AnswerRecords.Add(aRecord);
-                        }
+                        List<ARecord> resolvedDnsList =
+                            ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
+
+                        response.AnswerRecords.AddRange(resolvedDnsList);
+
                     }
                 }
             }
@@ -70,26 +61,27 @@ namespace AuroraDNS
 
         }
 
-        private static List<ADns> ResolveOverHttps(string ClientIpAddress, string DomainName)
+        private static List<ARecord> ResolveOverHttps(string clientIpAddress, string domainName)
         {
             string dnsStr = new WebClient().DownloadString(
                 "https://1.0.0.1/dns-query?ct=application/dns-json" +
-                $"&name={DomainName}&type=A&edns_client_subnet={ClientIpAddress}");
+                $"&name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
             List<JsonValue> dnsAnswerJsonList = Json.Parse(dnsStr).AsObjectGetArray("Answer");
 
-            List<ADns> aDnsList = new List<ADns>();
+            List<ARecord> aRecordList = new List<ARecord>();
             foreach (var itemJsonValue in dnsAnswerJsonList)
             {
-                ADns aDns = new ADns
-                {
-                    answerAddr = itemJsonValue.AsObjectGetString("data"),
-                    domainName = itemJsonValue.AsObjectGetString("name"),
-                    ttl = itemJsonValue.AsObjectGetInt("TTL")
-                };
-                aDnsList.Add(aDns);
+                string answerAddr = itemJsonValue.AsObjectGetString("data");
+                string answerDomainName = itemJsonValue.AsObjectGetString("name");
+                int ttl = itemJsonValue.AsObjectGetInt("TTL");
+
+                ARecord aRecord = new ARecord(
+                    DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+
+                aRecordList.Add(aRecord);
             }
 
-            return !IsIp(aDnsList[0].answerAddr) ? ResolveOverHttps(ClientIpAddress, aDnsList[0].answerAddr) : aDnsList;
+            return !IsIp(aRecordList[0].Address.ToString()) ? ResolveOverHttps(clientIpAddress, aRecordList[0].Address.ToString()) : aRecordList;
         }
 
         private static bool IsIp(string ip)
