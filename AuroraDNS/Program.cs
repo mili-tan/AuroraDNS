@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
 using MojoUnity;
 
@@ -56,8 +57,9 @@ namespace AuroraDNS
                         List<ADns> resolvedDnsList = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
                         foreach (var dnsItem in resolvedDnsList)
                         {
-                            ARecord aRecord = new ARecord(dnsQuestion.Name, dnsItem.ttl,
-                                IPAddress.Parse(dnsItem.answerAddr));
+                            ARecord aRecord = new ARecord(
+                                DomainName.Parse(dnsItem.domainName), 
+                                dnsItem.ttl,IPAddress.Parse(dnsItem.answerAddr));
                             response.AnswerRecords.Add(aRecord);
                         }
                     }
