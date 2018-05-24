@@ -75,13 +75,22 @@ namespace AuroraDNS
                 string answerDomainName = itemJsonValue.AsObjectGetString("name");
                 int ttl = itemJsonValue.AsObjectGetInt("TTL");
 
-                ARecord aRecord = new ARecord(
-                    DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
-
-                aRecordList.Add(aRecord);
+                
+                if (IsIp(answerAddr))
+                {
+                    ARecord aRecord = new ARecord(
+                        DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+                    aRecordList.Add(aRecord);
+                }
+                else
+                {
+                    return ResolveOverHttps(clientIpAddress, answerAddr);
+                }
             }
 
-            return !IsIp(aRecordList[0].Address.ToString()) ? ResolveOverHttps(clientIpAddress, aRecordList[0].Address.ToString()) : aRecordList;
+            Console.WriteLine(aRecordList[0].Address.ToString());
+
+            return aRecordList;
         }
 
         private static bool IsIp(string ip)
