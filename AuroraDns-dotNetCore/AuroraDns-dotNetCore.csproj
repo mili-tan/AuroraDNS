@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <RootNamespace>AuroraDNS.dotNetCore</RootNamespace>
+    <StartupObject>AuroraDNS.dotNetCore.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ARSoft.Tools.NetStandard.DXSdata" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>
