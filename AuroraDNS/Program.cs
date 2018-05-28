@@ -15,8 +15,12 @@ namespace AuroraDNS
 
     static class Program
     {
+        private static IPAddress MyIPAddr;
+
         static void Main(string[] args)
         {
+            MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ip.la/"));
+
             using (DnsServer dnsServer = new DnsServer(IPAddress.Any, 10, 10))
             {
                 dnsServer.QueryReceived += ServerOnQueryReceived;
@@ -30,6 +34,11 @@ namespace AuroraDNS
         private static async Task ServerOnQueryReceived(object sender, QueryReceivedEventArgs e)
         {
             IPAddress clientAddress = e.RemoteEndpoint.Address;
+
+            if (Equals(clientAddress, IPAddress.Loopback))
+            {
+                clientAddress = MyIPAddr;
+            }
 
             if (!(e.Query is DnsMessage query))
                 return;
@@ -55,7 +64,6 @@ namespace AuroraDNS
                         {
                             response.AnswerRecords.Add(item);
                         }
-
                     }
                 }
             }
@@ -92,6 +100,7 @@ namespace AuroraDNS
                         DomainName.Parse(answerDomainName),ttl,DomainName.Parse(answerAddr));
 
                     recordList.Add(cRecord);
+
                     //recordList.AddRange(ResolveOverHttps(clientIpAddress,answerAddr));
                     //return recordList;
                 }
@@ -104,5 +113,7 @@ namespace AuroraDNS
         {
             return Regex.IsMatch(ip, @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$");
         }
+
+
     }
 }
