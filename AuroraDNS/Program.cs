@@ -48,10 +48,13 @@ namespace AuroraDNS
                     {
                         Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
                         response.ReturnCode = ReturnCode.NoError;
-                        List<ARecord> resolvedDnsList =
+                        List<dynamic> resolvedDnsList =
                             ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString());
 
-                        response.AnswerRecords.AddRange(resolvedDnsList);
+                        foreach (var item in resolvedDnsList)
+                        {
+                            response.AnswerRecords.Add(item);
+                        }
 
                     }
                 }
@@ -61,14 +64,14 @@ namespace AuroraDNS
 
         }
 
-        private static List<ARecord> ResolveOverHttps(string clientIpAddress, string domainName)
+        private static List<dynamic> ResolveOverHttps(string clientIpAddress, string domainName)
         {
             string dnsStr = new WebClient().DownloadString(
                 "https://1.0.0.1/dns-query?ct=application/dns-json" +
                 $"&name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
             List<JsonValue> dnsAnswerJsonList = Json.Parse(dnsStr).AsObjectGetArray("Answer");
 
-            List<ARecord> aRecordList = new List<ARecord>();
+            List<dynamic> recordList = new List<dynamic>();
             foreach (var itemJsonValue in dnsAnswerJsonList)
             {
                 string answerAddr = itemJsonValue.AsObjectGetString("data");
@@ -80,17 +83,21 @@ namespace AuroraDNS
                 {
                     ARecord aRecord = new ARecord(
                         DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
-                    aRecordList.Add(aRecord);
+
+                    recordList.Add(aRecord);
                 }
                 else
                 {
-                    return ResolveOverHttps(clientIpAddress, answerAddr);
+                    CNameRecord cRecord = new CNameRecord(
+                        DomainName.Parse(answerDomainName),ttl,DomainName.Parse(answerAddr));
+
+                    recordList.Add(cRecord);
+                    //recordList.AddRange(ResolveOverHttps(clientIpAddress,answerAddr));
+                    //return recordList;
                 }
             }
 
-            Console.WriteLine(aRecordList[0].Address.ToString());
-
-            return aRecordList;
+            return recordList;
         }
 
         private static bool IsIp(string ip)
