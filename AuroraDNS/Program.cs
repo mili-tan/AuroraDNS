@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ARSoft.Tools.Net;
@@ -16,10 +17,14 @@ namespace AuroraDNS
     static class Program
     {
         private static IPAddress MyIPAddr;
+        private static IPAddress LocIPAddr;
 
         static void Main(string[] args)
         {
+            LocIPAddr = IPAddress.Parse(GetLocIp());
             MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ip.la/"));
+
+            //Console.WriteLine(LocIPAddr.GetHashCode() % (long)(256 * 256));
 
             using (DnsServer dnsServer = new DnsServer(IPAddress.Any, 10, 10))
             {
@@ -35,7 +40,7 @@ namespace AuroraDNS
         {
             IPAddress clientAddress = e.RemoteEndpoint.Address;
 
-            if (Equals(clientAddress, IPAddress.Loopback))
+            if (Equals(clientAddress, IPAddress.Loopback) || InSameSubNet(clientAddress,LocIPAddr))
             {
                 clientAddress = MyIPAddr;
             }
@@ -114,6 +119,33 @@ namespace AuroraDNS
             return Regex.IsMatch(ip, @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$");
         }
 
+        private static bool InSameSubNet(IPAddress ipA, IPAddress ipB)
+        {
+            if (ipA.GetHashCode() % (long)(256 * 256) == ipB.GetHashCode() % (long)(256 * 256))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private static string GetLocIp()
+        {
+            try
+            {
+                TcpClient tcpClien = new TcpClient();
+                tcpClien.Connect("www.sjtu.edu.cn", 80);
+                string ipStr = ((IPEndPoint)tcpClien.Client.LocalEndPoint).Address.ToString();
+                tcpClien.Close();
+                return ipStr;
+            }
+            catch (Exception)
+            {
+                return "192.168.0.1";
+            }
+        }
 
     }
 }
