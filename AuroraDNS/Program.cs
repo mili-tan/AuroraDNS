@@ -40,7 +40,7 @@ namespace AuroraDNS
         {
             IPAddress clientAddress = e.RemoteEndpoint.Address;
 
-            if (Equals(clientAddress, IPAddress.Loopback) || InSameSubNet(clientAddress,LocIPAddr))
+            if (Equals(clientAddress, IPAddress.Loopback) || InSameLANet(clientAddress,LocIPAddr))
             {
                 clientAddress = MyIPAddr;
             }
@@ -119,9 +119,9 @@ namespace AuroraDNS
             return Regex.IsMatch(ip, @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$");
         }
 
-        private static bool InSameSubNet(IPAddress ipA, IPAddress ipB)
+        private static bool InSameLANet(IPAddress ipA, IPAddress ipB)
         {
-            if (ipA.GetHashCode() % (long)(256 * 256) == ipB.GetHashCode() % (long)(256 * 256))
+            if (ipA.GetHashCode() % 65536L == ipB.GetHashCode() % 65536L)
             {
                 return true;
             }
