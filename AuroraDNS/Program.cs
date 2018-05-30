@@ -23,9 +23,12 @@ namespace AuroraDNS
         public static class DnsSetting
         {
             public static string HttpsDnsUrl = "https://1.0.0.1/dns-query";
+            //public static string HttpsDnsUrl = "https://dns.google.com/resolve";
             public static IPAddress ListenIp = IPAddress.Any;
             public static IPAddress EDnsIp = IPAddress.Any;
             public static bool EDnsPrivacy = false;
+            public static bool ProxyEnable = false;
+            public static WebProxy WProxy = new WebProxy("127.0.0.1:10800");
         }
 
         static void Main(string[] args)
@@ -93,10 +96,19 @@ namespace AuroraDNS
 
         private static List<dynamic> ResolveOverHttps(string clientIpAddress, string domainName)
         {
-            string dnsStr = new WebClient().DownloadString(
-                DnsSetting.HttpsDnsUrl + 
-                @"?ct=application/dns-json&" +
-                $"name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
+            string dnsStr;
+            using (WebClient webClient = new WebClient())
+            {
+                if (DnsSetting.ProxyEnable)
+                {
+                    webClient.Proxy = DnsSetting.WProxy;
+                }
+
+                dnsStr = webClient.DownloadString(
+                    DnsSetting.HttpsDnsUrl +
+                    @"?ct=application/dns-json&" +
+                    $"name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
+            }
 
             List<JsonValue> dnsAnswerJsonList = Json.Parse(dnsStr).AsObjectGetArray("Answer");
 
@@ -150,11 +162,11 @@ namespace AuroraDNS
         {
             try
             {
-                TcpClient tcpClien = new TcpClient();
-                tcpClien.Connect("www.sjtu.edu.cn", 80);
-                string ipStr = ((IPEndPoint)tcpClien.Client.LocalEndPoint).Address.ToString();
-                tcpClien.Close();
-                return ipStr;
+                using (TcpClient tcpClient = new TcpClient())
+                {
+                    tcpClient.Connect("www.sjtu.edu.cn", 80);
+                    return ((IPEndPoint)tcpClient.Client.LocalEndPoint).Address.ToString();
+                }
             }
             catch (Exception)
             {
