@@ -10,6 +10,7 @@ using MojoUnity;
 
 // ReSharper disable UnusedParameter.Local
 #pragma warning disable 1998
+#pragma warning disable 169
 
 namespace AuroraDNS
 {
@@ -19,6 +20,14 @@ namespace AuroraDNS
         private static IPAddress MyIPAddr;
         private static IPAddress LocIPAddr;
 
+        public static class DnsSetting
+        {
+            public static string HttpsDnsUrl = "https://1.0.0.1/dns-query";
+            public static IPAddress ListenIp = IPAddress.Any;
+            public static IPAddress EDnsIp = IPAddress.Any;
+            public static bool EDnsPrivacy = false;
+        }
+
         static void Main(string[] args)
         {
             LocIPAddr = IPAddress.Parse(GetLocIp());
@@ -26,7 +35,7 @@ namespace AuroraDNS
 
             //Console.WriteLine(LocIPAddr.GetHashCode() % (long)(256 * 256));
 
-            using (DnsServer dnsServer = new DnsServer(IPAddress.Any, 10, 10))
+            using (DnsServer dnsServer = new DnsServer(DnsSetting.ListenIp, 10, 10))
             {
                 dnsServer.QueryReceived += ServerOnQueryReceived;
                 dnsServer.Start();
@@ -40,10 +49,15 @@ namespace AuroraDNS
         {
             IPAddress clientAddress = e.RemoteEndpoint.Address;
 
-            if (Equals(clientAddress, IPAddress.Loopback) || InSameLANet(clientAddress,LocIPAddr))
+            if (DnsSetting.EDnsPrivacy)
+            {
+                clientAddress = DnsSetting.EDnsIp;
+            }
+            else if (Equals(clientAddress, IPAddress.Loopback) || InSameLANet(clientAddress,LocIPAddr))
             {
                 clientAddress = MyIPAddr;
             }
+
 
             if (!(e.Query is DnsMessage query))
                 return;
@@ -80,8 +94,10 @@ namespace AuroraDNS
         private static List<dynamic> ResolveOverHttps(string clientIpAddress, string domainName)
         {
             string dnsStr = new WebClient().DownloadString(
-                "https://1.0.0.1/dns-query?ct=application/dns-json" +
-                $"&name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
+                DnsSetting.HttpsDnsUrl + 
+                @"?ct=application/dns-json&" +
+                $"name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
+
             List<JsonValue> dnsAnswerJsonList = Json.Parse(dnsStr).AsObjectGetArray("Answer");
 
             List<dynamic> recordList = new List<dynamic>();
@@ -90,7 +106,6 @@ namespace AuroraDNS
                 string answerAddr = itemJsonValue.AsObjectGetString("data");
                 string answerDomainName = itemJsonValue.AsObjectGetString("name");
                 int ttl = itemJsonValue.AsObjectGetInt("TTL");
-
                 
                 if (IsIp(answerAddr))
                 {
