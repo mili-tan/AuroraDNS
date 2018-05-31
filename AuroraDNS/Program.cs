@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
@@ -20,16 +21,16 @@ namespace AuroraDNS
         private static IPAddress MyIPAddr;
         private static IPAddress LocIPAddr;
 
-        public static class DnsSetting
+        public static class ADnsSetting
         {
             public static string HttpsDnsUrl = "https://1.0.0.1/dns-query";
-
             //public static string HttpsDnsUrl = "https://dns.google.com/resolve";
+
             public static IPAddress ListenIp = IPAddress.Any;
             public static IPAddress EDnsIp = IPAddress.Any;
-            public static bool EDnsPrivacy = false;
-            public static bool ProxyEnable = false;
-            public static WebProxy WProxy = new WebProxy("127.0.0.1:10800");
+            public static bool EDnsPrivacy;
+            public static bool ProxyEnable;
+            public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
         static void Main(string[] args)
@@ -37,7 +38,12 @@ namespace AuroraDNS
             LocIPAddr = IPAddress.Parse(GetLocIp());
             MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ip.la/"));
 
-            using (DnsServer dnsServer = new DnsServer(DnsSetting.ListenIp, 10, 10))
+            if (!string.IsNullOrWhiteSpace(string.Join("",args)))
+                ReadConfig(args[0]);
+            if (File.Exists("config.json"))
+                ReadConfig("config.json");
+
+            using (DnsServer dnsServer = new DnsServer(ADnsSetting.ListenIp, 10, 10))
             {
                 dnsServer.QueryReceived += ServerOnQueryReceived;
                 dnsServer.Start();
@@ -53,8 +59,8 @@ namespace AuroraDNS
                 return;
 
             IPAddress clientAddress = e.RemoteEndpoint.Address;
-            if (DnsSetting.EDnsPrivacy)
-                clientAddress = DnsSetting.EDnsIp;
+            if (ADnsSetting.EDnsPrivacy)
+                clientAddress = ADnsSetting.EDnsIp;
             else if (Equals(clientAddress, IPAddress.Loopback) || InSameLaNet(clientAddress, LocIPAddr))
                 clientAddress = MyIPAddr;
 
@@ -74,7 +80,7 @@ namespace AuroraDNS
                         response.ReturnCode = ReturnCode.NoError;
                         List<dynamic> resolvedDnsList =
                             ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
-                                DnsSetting.ProxyEnable, DnsSetting.WProxy);
+                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
 
                         foreach (var item in resolvedDnsList)
                         {
@@ -98,7 +104,7 @@ namespace AuroraDNS
                     webClient.Proxy = wProxy;
 
                 dnsStr = webClient.DownloadString(
-                    DnsSetting.HttpsDnsUrl +
+                    ADnsSetting.HttpsDnsUrl +
                     @"?ct=application/dns-json&" +
                     $"name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
             }
@@ -158,6 +164,74 @@ namespace AuroraDNS
             {
                 return "192.168.0.1";
             }
+        }
+
+        private static void ReadConfig(string path)
+        {
+            Console.WriteLine("Read Config");
+            JsonValue configJson = Json.Parse(File.ReadAllText(path));
+            try
+            {
+                ADnsSetting.ListenIp = IPAddress.Parse(configJson.AsObjectGetString("Listen"));
+            }
+            catch 
+            {
+                ADnsSetting.ListenIp = IPAddress.Any;
+            }
+
+            try
+            {
+                ADnsSetting.ProxyEnable = configJson.AsObjectGetBool("ProxyEnable");
+            }
+            catch
+            {
+                ADnsSetting.ProxyEnable = false;
+            }
+
+            try
+            {
+                ADnsSetting.EDnsPrivacy = configJson.AsObjectGetBool("EDnsPrivacy");
+            }
+            catch
+            {
+                ADnsSetting.EDnsPrivacy = false;
+            }
+
+            try
+            {
+                ADnsSetting.EDnsIp = IPAddress.Parse(configJson.AsObjectGetString("EDnsClient"));
+            }
+            catch
+            {
+                ADnsSetting.EDnsIp = IPAddress.Any;
+            }
+
+            try
+            {
+                ADnsSetting.HttpsDnsUrl = configJson.AsObjectGetString("HttpsDns");
+                if (string.IsNullOrEmpty(ADnsSetting.HttpsDnsUrl))
+                {
+                    ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
+                }
+            }
+            catch
+            {
+                ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
+            }
+
+            Console.WriteLine("Listen:" + ADnsSetting.ListenIp);
+            Console.WriteLine("ProxyEnable:" + ADnsSetting.ProxyEnable);
+            Console.WriteLine("EDnsPrivacy:" + ADnsSetting.EDnsPrivacy);
+            Console.WriteLine("EDnsClient:" + ADnsSetting.EDnsIp);
+            Console.WriteLine("HttpsDns:" + ADnsSetting.HttpsDnsUrl);
+
+            if (ADnsSetting.ProxyEnable)
+            {
+                ADnsSetting.WProxy = new WebProxy(configJson.AsObjectGetString("Proxy"));
+                Console.WriteLine(configJson.AsObjectGetString("Proxy"));
+            }
+
+            Console.WriteLine("------------------------");
         }
 
     }
