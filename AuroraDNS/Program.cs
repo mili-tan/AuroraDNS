@@ -30,6 +30,7 @@ namespace AuroraDNS
             public static IPAddress EDnsIp = IPAddress.Any;
             public static bool EDnsPrivacy;
             public static bool ProxyEnable;
+            public static bool DebugLog;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
@@ -76,7 +77,10 @@ namespace AuroraDNS
                 {
                     foreach (DnsQuestion dnsQuestion in query.Questions)
                     {
-                        Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
+                        if (ADnsSetting.DebugLog)
+                        {
+                            Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
+                        }
                         response.ReturnCode = ReturnCode.NoError;
                         List<dynamic> resolvedDnsList =
                             ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
@@ -195,6 +199,15 @@ namespace AuroraDNS
             catch
             {
                 ADnsSetting.EDnsPrivacy = false;
+            }
+
+            try
+            {
+                ADnsSetting.DebugLog = configJson.AsObjectGetBool("DebugLog");
+            }
+            catch
+            {
+                ADnsSetting.DebugLog = false;
             }
 
             try
