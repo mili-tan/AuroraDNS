@@ -234,6 +234,7 @@ namespace AuroraDNS
 
             Console.WriteLine("Listen:" + ADnsSetting.ListenIp);
             Console.WriteLine("ProxyEnable:" + ADnsSetting.ProxyEnable);
+            Console.WriteLine("DebugLog:" + ADnsSetting.DebugLog);
             Console.WriteLine("EDnsPrivacy:" + ADnsSetting.EDnsPrivacy);
             Console.WriteLine("EDnsClient:" + ADnsSetting.EDnsIp);
             Console.WriteLine("HttpsDns:" + ADnsSetting.HttpsDnsUrl);
