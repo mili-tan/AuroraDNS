@@ -33,7 +33,7 @@ namespace AuroraDNS
             public static bool EDnsPrivacy;
             public static bool ProxyEnable;
             public static bool DebugLog;
-            public static bool BlackList = true;
+            public static bool BlackListEnable;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
@@ -47,7 +47,7 @@ namespace AuroraDNS
             if (File.Exists("config.json"))
                 ReadConfig("config.json");
 
-            if (ADnsSetting.BlackList)
+            if (ADnsSetting.BlackListEnable)
             {
                 string[] blackListStrs = File.ReadAllLines("black.list");
                 BlackList = Array.ConvertAll(blackListStrs, DomainName.Parse).ToList();
@@ -89,9 +89,8 @@ namespace AuroraDNS
             DnsMessage response = query.CreateResponseInstance();
 
             if (query.Questions.Count <= 0)
-            {
                 response.ReturnCode = ReturnCode.ServerFailure;
-            }
+            
             else
             {
                 if (query.Questions[0].RecordType == RecordType.A)
@@ -105,12 +104,20 @@ namespace AuroraDNS
 
                         response.ReturnCode = ReturnCode.NoError;
 
-                        List<dynamic> resolvedDnsList =
-                            ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
-                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
-                        foreach (var item in resolvedDnsList)
+                        if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))
                         {
-                            response.AnswerRecords.Add(item);
+                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, IPAddress.Any);
+                            response.AnswerRecords.Add(blackRecord);
+                        }
+                        else
+                        {
+                            List<dynamic> resolvedDnsList =
+                                ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
+                                    ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
+                            foreach (var item in resolvedDnsList)
+                            {
+                                response.AnswerRecords.Add(item);
+                            }
                         }
 
                     }
@@ -126,16 +133,6 @@ namespace AuroraDNS
         {
             string dnsStr;
             List<dynamic> recordList = new List<dynamic>();
-
-            if (ADnsSetting.BlackList)
-            {
-                if (BlackList.Contains(DomainName.Parse(domainName)))
-                {
-                    ARecord blackRecord = new ARecord(DomainName.Parse(domainName), 9, IPAddress.Any);
-                    recordList.Add(blackRecord);
-                    return recordList;
-                }
-            }
 
             using (WebClient webClient = new WebClient())
             {
@@ -220,6 +217,15 @@ namespace AuroraDNS
 
             try
             {
+                ADnsSetting.BlackListEnable = configJson.AsObjectGetBool("BlackList");
+            }
+            catch
+            {
+                ADnsSetting.BlackListEnable = false;
+            }
+
+            try
+            {
                 ADnsSetting.ProxyEnable = configJson.AsObjectGetBool("ProxyEnable");
             }
             catch
@@ -268,6 +274,7 @@ namespace AuroraDNS
             }
 
             Console.WriteLine("Listen      : " + ADnsSetting.ListenIp);
+            Console.WriteLine("BlackList   : " + ADnsSetting.BlackListEnable);
             Console.WriteLine("ProxyEnable : " + ADnsSetting.ProxyEnable);
             Console.WriteLine("DebugLog    : " + ADnsSetting.DebugLog);
             Console.WriteLine("EDnsPrivacy : " + ADnsSetting.EDnsPrivacy);
