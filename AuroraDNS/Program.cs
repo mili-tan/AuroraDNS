@@ -22,6 +22,7 @@ namespace AuroraDNS
         private static IPAddress MyIPAddr;
         private static IPAddress LocIPAddr;
         private static List<DomainName> BlackList;
+        private static Dictionary<DomainName, IPAddress> WhiteList;
 
         public static class ADnsSetting
         {
@@ -34,6 +35,7 @@ namespace AuroraDNS
             public static bool ProxyEnable;
             public static bool DebugLog;
             public static bool BlackListEnable;
+            public static bool WhiteListEnable = true;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
@@ -58,6 +60,24 @@ namespace AuroraDNS
                     foreach (var itemName in BlackList)
                     {
                         Console.WriteLine(itemName.ToString());
+                    }
+                }
+            }
+
+            if (ADnsSetting.WhiteListEnable)
+            {
+                string[] whiteListStrs = File.ReadAllLines("white.list");
+                WhiteList = whiteListStrs.Select(
+                    itemStr => itemStr.Split(' ', ',', '\t')).ToDictionary(
+                    whiteSplit => DomainName.Parse(whiteSplit[1]),
+                    whiteSplit => IPAddress.Parse(whiteSplit[0]));
+
+                if (ADnsSetting.DebugLog)
+                {
+                    Console.WriteLine("-------White List-------");
+                    foreach (var itemName in WhiteList)
+                    {
+                        Console.WriteLine(itemName.Key + " : " + itemName.Value);
                     }
                 }
             }
@@ -106,14 +126,32 @@ namespace AuroraDNS
 
                         if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))
                         {
+                            //BlackList
                             ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, IPAddress.Any);
                             response.AnswerRecords.Add(blackRecord);
+                            if (ADnsSetting.DebugLog)
+                            {
+                                Console.WriteLine("|- BlackList");
+                            }
                         }
+
+                        else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name))
+                        {
+                            //WhiteList
+                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, WhiteList[dnsQuestion.Name]);
+                            response.AnswerRecords.Add(blackRecord);
+                            if (ADnsSetting.DebugLog)
+                            {
+                                Console.WriteLine("|- WhiteList");
+                            }
+                        }
+
                         else
                         {
+                            //Resolve
                             List<dynamic> resolvedDnsList =
                                 ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
-                                    ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
+                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
                             foreach (var item in resolvedDnsList)
                             {
                                 response.AnswerRecords.Add(item);
