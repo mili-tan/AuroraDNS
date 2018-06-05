@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
@@ -20,6 +21,7 @@ namespace AuroraDNS
     {
         private static IPAddress MyIPAddr;
         private static IPAddress LocIPAddr;
+        private static List<DomainName> BlackList;
 
         public static class ADnsSetting
         {
@@ -31,26 +33,45 @@ namespace AuroraDNS
             public static bool EDnsPrivacy;
             public static bool ProxyEnable;
             public static bool DebugLog;
+            public static bool BlackList = true;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
         static void Main(string[] args)
         {
             LocIPAddr = IPAddress.Parse(GetLocIp());
-            MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ip.la/"));
+            MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org"));
 
             if (!string.IsNullOrWhiteSpace(string.Join("",args)))
                 ReadConfig(args[0]);
             if (File.Exists("config.json"))
                 ReadConfig("config.json");
 
+            if (ADnsSetting.BlackList)
+            {
+                string[] blackListStrs = File.ReadAllLines("black.list");
+                BlackList = Array.ConvertAll(blackListStrs, DomainName.Parse).ToList();
+
+                if (ADnsSetting.DebugLog)
+                {
+                    Console.WriteLine("-------Black List-------");
+                    foreach (var itemName in BlackList)
+                    {
+                        Console.WriteLine(itemName.ToString());
+                    }
+                }
+            }
+
             using (DnsServer dnsServer = new DnsServer(ADnsSetting.ListenIp, 10, 10))
             {
                 dnsServer.QueryReceived += ServerOnQueryReceived;
                 dnsServer.Start();
+                Console.WriteLine("-------AURORA DNS-------");
                 Console.WriteLine("AuroraDNS Server Running");
                 Console.WriteLine("Press any key to stop dns server");
+                Console.WriteLine("------------------------");
                 Console.ReadLine();
+                Console.WriteLine("------------------------");
             }
         }
 
@@ -81,15 +102,17 @@ namespace AuroraDNS
                         {
                             Console.WriteLine(clientAddress + " : " + dnsQuestion.Name);
                         }
+
                         response.ReturnCode = ReturnCode.NoError;
+
                         List<dynamic> resolvedDnsList =
                             ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
                                 ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
-
                         foreach (var item in resolvedDnsList)
                         {
                             response.AnswerRecords.Add(item);
                         }
+
                     }
                 }
             }
@@ -102,6 +125,18 @@ namespace AuroraDNS
             bool proxyEnable = false, IWebProxy wProxy = null)
         {
             string dnsStr;
+            List<dynamic> recordList = new List<dynamic>();
+
+            if (ADnsSetting.BlackList)
+            {
+                if (BlackList.Contains(DomainName.Parse(domainName)))
+                {
+                    ARecord blackRecord = new ARecord(DomainName.Parse(domainName), 9, IPAddress.Any);
+                    recordList.Add(blackRecord);
+                    return recordList;
+                }
+            }
+
             using (WebClient webClient = new WebClient())
             {
                 if (proxyEnable)
@@ -115,7 +150,6 @@ namespace AuroraDNS
 
             List<JsonValue> dnsAnswerJsonList = Json.Parse(dnsStr).AsObjectGetArray("Answer");
 
-            List<dynamic> recordList = new List<dynamic>();
             foreach (var itemJsonValue in dnsAnswerJsonList)
             {
                 string answerAddr = itemJsonValue.AsObjectGetString("data");
@@ -172,7 +206,8 @@ namespace AuroraDNS
 
         private static void ReadConfig(string path)
         {
-            Console.WriteLine("Read Config");
+            Console.WriteLine("------Read Config-------");
+
             JsonValue configJson = Json.Parse(File.ReadAllText(path));
             try
             {
@@ -232,20 +267,18 @@ namespace AuroraDNS
                 ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
             }
 
-            Console.WriteLine("Listen:" + ADnsSetting.ListenIp);
-            Console.WriteLine("ProxyEnable:" + ADnsSetting.ProxyEnable);
-            Console.WriteLine("DebugLog:" + ADnsSetting.DebugLog);
-            Console.WriteLine("EDnsPrivacy:" + ADnsSetting.EDnsPrivacy);
-            Console.WriteLine("EDnsClient:" + ADnsSetting.EDnsIp);
-            Console.WriteLine("HttpsDns:" + ADnsSetting.HttpsDnsUrl);
+            Console.WriteLine("Listen      : " + ADnsSetting.ListenIp);
+            Console.WriteLine("ProxyEnable : " + ADnsSetting.ProxyEnable);
+            Console.WriteLine("DebugLog    : " + ADnsSetting.DebugLog);
+            Console.WriteLine("EDnsPrivacy : " + ADnsSetting.EDnsPrivacy);
+            Console.WriteLine("EDnsClient  : " + ADnsSetting.EDnsIp);
+            Console.WriteLine("HttpsDns    : " + ADnsSetting.HttpsDnsUrl);
 
             if (ADnsSetting.ProxyEnable)
             {
                 ADnsSetting.WProxy = new WebProxy(configJson.AsObjectGetString("Proxy"));
-                Console.WriteLine(configJson.AsObjectGetString("Proxy"));
+                Console.WriteLine("ProxyServer : " + configJson.AsObjectGetString("Proxy"));
             }
-
-            Console.WriteLine("------------------------");
         }
 
     }
