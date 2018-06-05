@@ -35,7 +35,7 @@ namespace AuroraDNS
             public static bool ProxyEnable;
             public static bool DebugLog;
             public static bool BlackListEnable;
-            public static bool WhiteListEnable = true;
+            public static bool WhiteListEnable;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
@@ -260,6 +260,15 @@ namespace AuroraDNS
             catch
             {
                 ADnsSetting.BlackListEnable = false;
+            }
+
+            try
+            {
+                ADnsSetting.WhiteListEnable = configJson.AsObjectGetBool("WhiteList");
+            }
+            catch
+            {
+                ADnsSetting.WhiteListEnable = false;
             }
 
             try
