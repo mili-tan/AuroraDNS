@@ -26,8 +26,12 @@ namespace AuroraDNS
 
         public static class ADnsSetting
         {
+
             public static string HttpsDnsUrl = "https://1.0.0.1/dns-query";
-            //public static string HttpsDnsUrl = "https://dns.google.com/resolve";
+            //"https://dns.google.com/resolve";
+            //"https://dnsp.mili.one:23233/dns-query";
+            //"https://dnsp1.mili.one:23233/dns-query";
+            //"https://plus1s.site/extdomains/dns.google.com/resolve";
 
             public static IPAddress ListenIp = IPAddress.Any;
             public static IPAddress EDnsIp = IPAddress.Any;
@@ -43,6 +47,7 @@ namespace AuroraDNS
         {
             Console.WriteLine(Resource.ASCII);
 
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             LocIPAddr = IPAddress.Parse(GetLocIp());
             MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org"));
 

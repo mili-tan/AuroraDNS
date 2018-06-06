@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27703.2000
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuroraDNS", "AuroraDNS\AuroraDNS.csproj", "{E00567B5-E454-42B5-8441-31CA58F04087}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuroraDNS-dotNetCore", "AuroraDNS-dotNetCore\AuroraDns-dotNetCore.csproj", "{CC0C5955-5F9E-4B53-9589-CD30754FDC4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuroraDns-dotNetCore", "AuroraDNS-dotNetCore\AuroraDns-dotNetCore.csproj", "{CC0C5955-5F9E-4B53-9589-CD30754FDC4B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
