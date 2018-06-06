@@ -20,6 +20,7 @@ namespace AuroraDNS
     static class Program
     {
         private static IPAddress MyIPAddr;
+        private static ConsoleColor OriginColor;
         private static IPAddress LocIPAddr;
         private static List<DomainName> BlackList;
         private static Dictionary<DomainName, IPAddress> WhiteList;
@@ -48,6 +49,7 @@ namespace AuroraDNS
             Console.WriteLine(Resource.ASCII);
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            OriginColor = Console.ForegroundColor;
             LocIPAddr = IPAddress.Parse(GetLocIp());
             MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org"));
 
@@ -97,7 +99,11 @@ namespace AuroraDNS
                 dnsServer.QueryReceived += ServerOnQueryReceived;
                 dnsServer.Start();
                 Console.WriteLine(@"-------AURORA DNS-------");
+
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine(@"AuroraDNS Server Running");
+                Console.ForegroundColor = OriginColor;
+
                 Console.WriteLine(@"Press any key to stop dns server");
                 Console.WriteLine(Resource.Line);
                 Console.ReadLine();
@@ -159,12 +165,22 @@ namespace AuroraDNS
                         else
                         {
                             //Resolve
-                            List<dynamic> resolvedDnsList =
-                                ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
-                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
-                            foreach (var item in resolvedDnsList)
+                            try
                             {
-                                response.AnswerRecords.Add(item);
+                                List<dynamic> resolvedDnsList =
+                                    ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
+                                        ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
+                                foreach (var item in resolvedDnsList)
+                                {
+                                    response.AnswerRecords.Add(item);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine(@"| " + ex);
+                                Console.ForegroundColor = OriginColor;
                             }
                         }
 
