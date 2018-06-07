@@ -167,17 +167,23 @@ namespace AuroraDNS
                             //Resolve
                             try
                             {
-                                List<dynamic> resolvedDnsList =
-                                    ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
-                                        ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
-                                foreach (var item in resolvedDnsList)
+                                var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(), dnsQuestion.Name.ToString(),
+                                    ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
+                                if (resolvedDnsList != null)
                                 {
-                                    response.AnswerRecords.Add(item);
+                                    foreach (var item in resolvedDnsList)
+                                    {
+                                        response.AnswerRecords.Add(item);
+                                    }
+                                }
+                                else
+                                {
+                                    response.ReturnCode = (ReturnCode)statusCode;
                                 }
                             }
                             catch (Exception ex)
                             {
-
+                                response.ReturnCode = ReturnCode.ServerFailure;
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.WriteLine(@"| " + ex);
                                 Console.ForegroundColor = OriginColor;
@@ -192,7 +198,7 @@ namespace AuroraDNS
 
         }
 
-        private static List<dynamic> ResolveOverHttps(string clientIpAddress, string domainName,
+        private static (List<dynamic> list,int statusCode) ResolveOverHttps(string clientIpAddress, string domainName,
             bool proxyEnable = false, IWebProxy wProxy = null)
         {
             string dnsStr;
@@ -209,7 +215,14 @@ namespace AuroraDNS
                     $"name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
             }
 
-            List<JsonValue> dnsAnswerJsonList = Json.Parse(dnsStr).AsObjectGetArray("Answer");
+            JsonValue dnsJsonValue = Json.Parse(dnsStr);
+            int statusCode = dnsJsonValue.AsObjectGetInt("Status");
+            if (statusCode != 0)
+            {
+                return (null,statusCode);
+            }
+
+            List<JsonValue> dnsAnswerJsonList = dnsJsonValue.AsObjectGetArray("Answer");
 
             foreach (var itemJsonValue in dnsAnswerJsonList)
             {
@@ -236,7 +249,7 @@ namespace AuroraDNS
                 }
             }
 
-            return recordList;
+            return (recordList,statusCode);
         }
 
         private static bool IsIp(string ip)
