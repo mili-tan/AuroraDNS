@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
@@ -51,7 +52,15 @@ namespace AuroraDNS
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             OriginColor = Console.ForegroundColor;
             LocIPAddr = IPAddress.Parse(GetLocIp());
-            MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org"));
+            if (Thread.CurrentThread.CurrentCulture.Name == "zh-CN")
+            {
+                MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("http://members.3322.org/dyndns/getip").Trim());
+            }
+            else
+            {
+                MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org").Trim());
+            }
+
 
             Console.Clear();
 
