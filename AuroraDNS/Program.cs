@@ -110,6 +110,7 @@ namespace AuroraDNS
                 Console.WriteLine(@"-------AURORA DNS-------");
 
                 Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(DateTime.Now);
                 Console.WriteLine(@"AuroraDNS Server Running");
                 Console.ForegroundColor = OriginColor;
 
@@ -146,7 +147,7 @@ namespace AuroraDNS
 
                         if (ADnsSetting.DebugLog)
                         {
-                            Console.WriteLine(@"| " + clientAddress + @" : " + dnsQuestion.Name);
+                            Console.WriteLine($@"| {DateTime.Now} {clientAddress} : { dnsQuestion.Name}");
                         }
 
                         if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))

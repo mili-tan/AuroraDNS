@@ -45,13 +45,13 @@ namespace AuroraDNS.dotNetCore
         static void Main(string[] args)
         {
             Console.WriteLine(
-                "           __   __   __              __        __  \r\n" +
-                " /\\  |  | |__) /  \\ |__)  /\\        |  \\ |\\ | /__  \r\n" +
-                "/  \\ \\__/ |  \\ \\__/ |  \\ /  \\       |__/ | \\|  __/ \r\n" +
-                " __   __  ___       ___ ___     __   __   __   ___ \r\n" +
-                "|  \\ /  \\  |  |\\ | |__   |     /    /  \\ |__) |__  \r\n" +
-                "|__/ \\__/  |  | \\| |___  |     \\__  \\__/ |  \\ |___ \r\n" +
-                "                                                   ");
+                $@"           __   __   __              __        __  {Environment.NewLine}" +
+                $@" /\  |  | |__) /  \ |__)  /\        |  \ |\ | /__  {Environment.NewLine}" +
+                $@"/  \ \__/ |  \ \__/ |  \ /  \       |__/ | \|  __/ {Environment.NewLine}" +
+                $@" __   __  ___       ___ ___     __   __   __   ___ {Environment.NewLine}" +
+                $@"|  \ /  \  |  |\ | |__   |     /    /  \ |__) |__  {Environment.NewLine}" +
+                $@"|__/ \__/  |  | \| |___  |     \__  \__/ |  \ |___ {Environment.NewLine}" +
+                $@"                                                   ");
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             OriginColor = Console.ForegroundColor;
