@@ -30,6 +30,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="ARSoft.Tools.Net, Version=2.2.7.0, Culture=neutral, PublicKeyToken=1940454cd762ec57, processorArchitecture=MSIL">
       <HintPath>..\packages\ARSoft.Tools.Net.2.2.7\lib\net45\ARSoft.Tools.Net.dll</HintPath>
