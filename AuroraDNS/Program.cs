@@ -20,9 +20,9 @@ namespace AuroraDNS
 
     static class Program
     {
-        private static IPAddress MyIPAddr;
-        private static ConsoleColor OriginColor;
+        private static IPAddress IntIPAddr;
         private static IPAddress LocIPAddr;
+        private static ConsoleColor OriginColor;
         private static List<DomainName> BlackList;
         private static Dictionary<DomainName, IPAddress> WhiteList;
 
@@ -54,11 +54,11 @@ namespace AuroraDNS
             LocIPAddr = IPAddress.Parse(GetLocIp());
             if (Thread.CurrentThread.CurrentCulture.Name == "zh-CN")
             {
-                MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("http://members.3322.org/dyndns/getip").Trim());
+                IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("http://members.3322.org/dyndns/getip").Trim());
             }
             else
             {
-                MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org").Trim());
+                IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org").Trim());
             }
 
 
@@ -129,8 +129,10 @@ namespace AuroraDNS
             IPAddress clientAddress = e.RemoteEndpoint.Address;
             if (ADnsSetting.EDnsPrivacy)
                 clientAddress = ADnsSetting.EDnsIp;
-            else if (Equals(clientAddress, IPAddress.Loopback) || InSameLaNet(clientAddress, LocIPAddr))
-                clientAddress = MyIPAddr;
+            else if (Equals(clientAddress, IPAddress.Loopback))
+                clientAddress = IntIPAddr;
+            else if (InSameLaNet(clientAddress, LocIPAddr) && !Equals(IntIPAddr, LocIPAddr))
+                clientAddress = IntIPAddr;
 
             DnsMessage response = query.CreateResponseInstance();
 
