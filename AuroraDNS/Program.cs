@@ -153,8 +153,9 @@ namespace AuroraDNS
                         if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))
                         {
                             //BlackList
-                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, IPAddress.Any);
-                            response.AnswerRecords.Add(blackRecord);
+                            response.ReturnCode = ReturnCode.NxDomain;
+                            //ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, IPAddress.Any);
+                            //response.AnswerRecords.Add(blackRecord);
                             if (ADnsSetting.DebugLog)
                             {
                                 Console.WriteLine(@"|- BlackList");
