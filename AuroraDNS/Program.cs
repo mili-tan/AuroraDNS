@@ -37,7 +37,7 @@ namespace AuroraDNS
 
             public static IPAddress ListenIp = IPAddress.Any;
             public static IPAddress EDnsIp = IPAddress.Any;
-            public static bool EDnsPrivacy;
+            public static bool EDnsCustomize;
             public static bool ProxyEnable;
             public static bool DebugLog;
             public static bool BlackListEnable;
@@ -127,7 +127,7 @@ namespace AuroraDNS
                 return;
 
             IPAddress clientAddress = e.RemoteEndpoint.Address;
-            if (ADnsSetting.EDnsPrivacy)
+            if (ADnsSetting.EDnsCustomize)
                 clientAddress = ADnsSetting.EDnsIp;
             else if (Equals(clientAddress, IPAddress.Loopback))
                 clientAddress = IntIPAddr;
@@ -334,11 +334,11 @@ namespace AuroraDNS
 
             try
             {
-                ADnsSetting.EDnsPrivacy = configJson.AsObjectGetBool("EDnsPrivacy");
+                ADnsSetting.EDnsCustomize = configJson.AsObjectGetBool("EDnsPrivacy");
             }
             catch
             {
-                ADnsSetting.EDnsPrivacy = false;
+                ADnsSetting.EDnsCustomize = false;
             }
 
             try
@@ -352,7 +352,7 @@ namespace AuroraDNS
 
             try
             {
-                ADnsSetting.EDnsIp = IPAddress.Parse(configJson.AsObjectGetString("EDnsClient"));
+                ADnsSetting.EDnsIp = IPAddress.Parse(configJson.AsObjectGetString("EDnsClientIp"));
             }
             catch
             {
@@ -377,9 +377,9 @@ namespace AuroraDNS
             Console.WriteLine(@"WhiteList   : " + ADnsSetting.WhiteListEnable);
             Console.WriteLine(@"ProxyEnable : " + ADnsSetting.ProxyEnable);
             Console.WriteLine(@"DebugLog    : " + ADnsSetting.DebugLog);
-            Console.WriteLine(@"EDnsPrivacy : " + ADnsSetting.EDnsPrivacy);
             Console.WriteLine(@"EDnsClient  : " + ADnsSetting.EDnsIp);
             Console.WriteLine(@"HttpsDns    : " + ADnsSetting.HttpsDnsUrl);
+            Console.WriteLine(@"EDnsCustomize : " + ADnsSetting.EDnsCustomize);
 
             if (ADnsSetting.ProxyEnable)
             {
