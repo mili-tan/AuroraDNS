@@ -154,25 +154,26 @@ namespace AuroraDNS
 
                         if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))
                         {
-                            //BlackList
-                            response.ReturnCode = ReturnCode.NxDomain;
-                            //ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, IPAddress.Any);
-                            //response.AnswerRecords.Add(blackRecord);
                             if (ADnsSetting.DebugLog)
                             {
                                 Console.WriteLine(@"|- BlackList");
                             }
+                            
+                            //BlackList
+                            response.ReturnCode = ReturnCode.NxDomain;
+                            //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
                         }
 
                         else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name))
                         {
-                            //WhiteList
-                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, WhiteList[dnsQuestion.Name]);
-                            response.AnswerRecords.Add(blackRecord);
                             if (ADnsSetting.DebugLog)
                             {
                                 Console.WriteLine(@"|- WhiteList");
                             }
+                            
+                            //WhiteList
+                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, WhiteList[dnsQuestion.Name]);
+                            response.AnswerRecords.Add(blackRecord);
                         }
 
                         else
