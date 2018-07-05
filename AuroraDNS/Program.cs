@@ -116,8 +116,7 @@ namespace AuroraDNS
 
                 Console.WriteLine(@"Press any key to stop dns server");
                 Console.WriteLine(Resource.Line);
-                Console.ReadLine();
-                Console.WriteLine(Resource.Line);
+                Console.ReadKey();
             }
         }
 
