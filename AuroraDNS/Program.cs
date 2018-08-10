@@ -268,12 +268,6 @@ namespace AuroraDNS
                         DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
                     recordList.Add(aaaaRecord);
                 }
-                else if (type == RecordType.CName)
-                {
-                    CNameRecord cNameRecord = new CNameRecord(
-                        DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr.Split(' ')[0]));
-                    recordList.Add(cNameRecord);
-                }
             }
 
             return (recordList,statusCode);
