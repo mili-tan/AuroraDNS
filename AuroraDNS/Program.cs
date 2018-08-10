@@ -61,7 +61,6 @@ namespace AuroraDNS
                 IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org").Trim());
             }
 
-
             Console.Clear();
 
             if (!string.IsNullOrWhiteSpace(string.Join("",args)))
@@ -212,7 +211,7 @@ namespace AuroraDNS
         }
 
         private static (List<dynamic> list,int statusCode) ResolveOverHttps(string clientIpAddress, string domainName,
-            bool proxyEnable = false, IWebProxy wProxy = null)
+            bool proxyEnable = false, IWebProxy wProxy = null, RecordType type = RecordType.A)
         {
             string dnsStr;
             List<dynamic> recordList = new List<dynamic>();
@@ -243,22 +242,25 @@ namespace AuroraDNS
                 string answerDomainName = itemJsonValue.AsObjectGetString("name");
                 int ttl = itemJsonValue.AsObjectGetInt("TTL");
 
-                if (IsIp(answerAddr))
+                if (type == RecordType.A)
                 {
-                    ARecord aRecord = new ARecord(
-                        DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+                    if (IsIp(answerAddr))
+                    {
+                        ARecord aRecord = new ARecord(
+                            DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
 
-                    recordList.Add(aRecord);
-                }
-                else
-                {
-                    CNameRecord cRecord = new CNameRecord(
-                        DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(aRecord);
+                    }
+                    else
+                    {
+                        CNameRecord cRecord = new CNameRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
 
-                    recordList.Add(cRecord);
+                        recordList.Add(cRecord);
 
-                    //recordList.AddRange(ResolveOverHttps(clientIpAddress,answerAddr));
-                    //return recordList;
+                        //recordList.AddRange(ResolveOverHttps(clientIpAddress,answerAddr));
+                        //return recordList;
+                    }
                 }
             }
 
