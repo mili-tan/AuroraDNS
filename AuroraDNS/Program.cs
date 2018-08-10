@@ -262,6 +262,16 @@ namespace AuroraDNS
                         //return recordList;
                     }
                 }
+                else if (type == RecordType.Aaaa)
+                {
+                    AaaaRecord a4Record = new AaaaRecord(
+                        DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+                }
+                else if (type == RecordType.CName)
+                {
+                    CNameRecord cNameRecord = new CNameRecord(
+                        DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                }
             }
 
             return (recordList,statusCode);
