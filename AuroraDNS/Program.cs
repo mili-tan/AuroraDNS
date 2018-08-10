@@ -264,13 +264,15 @@ namespace AuroraDNS
                 }
                 else if (type == RecordType.Aaaa)
                 {
-                    AaaaRecord a4Record = new AaaaRecord(
+                    AaaaRecord aaaaRecord = new AaaaRecord(
                         DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+                    recordList.Add(aaaaRecord);
                 }
                 else if (type == RecordType.CName)
                 {
                     CNameRecord cNameRecord = new CNameRecord(
-                        DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr.Split(' ')[0]));
+                    recordList.Add(cNameRecord);
                 }
             }
 
