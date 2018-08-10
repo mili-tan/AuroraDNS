@@ -224,7 +224,7 @@ namespace AuroraDNS
                 dnsStr = webClient.DownloadString(
                     ADnsSetting.HttpsDnsUrl +
                     @"?ct=application/dns-json&" +
-                    $"name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
+                    $"name={domainName}&type={type.ToString()}&edns_client_subnet={clientIpAddress}");
             }
 
             JsonValue dnsJsonValue = Json.Parse(dnsStr);
