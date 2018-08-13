@@ -195,31 +195,30 @@ namespace AuroraDNS
                         }
 
                     }
-                    //else if(query.Questions[0].RecordType == RecordType.Aaaa)
-                    //{
-                    //    Console.WriteLine(query.Questions[0].RecordType.ToString());
-                    //    response.ReturnCode = ReturnCode.NoError;
-                    //    foreach (DnsQuestion dnsQuestion in query.Questions)
-                    //    {
-                    //        response.ReturnCode = ReturnCode.NoError;
+                    else
+                    {
+                        response.ReturnCode = ReturnCode.NoError;
+                        foreach (DnsQuestion dnsQuestion in query.Questions)
+                        {
+                            response.ReturnCode = ReturnCode.NoError;
 
-                    //        var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
-                    //            dnsQuestion.Name.ToString(),
-                    //            ADnsSetting.ProxyEnable, ADnsSetting.WProxy, query.Questions[0].RecordType);
+                            var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
+                                dnsQuestion.Name.ToString(),
+                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy, query.Questions[0].RecordType);
 
-                    //        if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
-                    //        {
-                    //            foreach (var item in resolvedDnsList)
-                    //            {
-                    //                response.AnswerRecords.Add(item);
-                    //            }
-                    //        }
-                    //        else
-                    //        {
-                    //            response.ReturnCode = (ReturnCode) statusCode;
-                    //        }
-                    //    }
-                    //}
+                            if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
+                            {
+                                foreach (var item in resolvedDnsList)
+                                {
+                                    response.AnswerRecords.Add(item);
+                                }
+                            }
+                            else
+                            {
+                                response.ReturnCode = (ReturnCode) statusCode;
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -234,7 +233,7 @@ namespace AuroraDNS
 
         }
 
-        private static (List<dynamic> list,int statusCode) ResolveOverHttps(string clientIpAddress, string domainName,
+        private static (List<dynamic> list, int statusCode) ResolveOverHttps(string clientIpAddress, string domainName,
             bool proxyEnable = false, IWebProxy wProxy = null, RecordType type = RecordType.A)
         {
             string dnsStr;
@@ -258,7 +257,7 @@ namespace AuroraDNS
                 return (new List<dynamic>(), statusCode);
             }
 
-            try
+            if (dnsStr.Contains("\"Answer\""))
             {
                 var dnsAnswerJsonList = dnsJsonValue.AsObjectGetArray("Answer");
 
@@ -312,12 +311,8 @@ namespace AuroraDNS
                     }
                 }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
 
-            return (recordList,statusCode);
+            return (recordList, statusCode);
         }
 
         private static bool IsIp(string ip)
