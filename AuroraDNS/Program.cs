@@ -240,18 +240,19 @@ namespace AuroraDNS
             {
                 string answerAddr = itemJsonValue.AsObjectGetString("data");
                 string answerDomainName = itemJsonValue.AsObjectGetString("name");
+                int answerType = itemJsonValue.AsObjectGetInt("type");
                 int ttl = itemJsonValue.AsObjectGetInt("TTL");
 
                 if (type == RecordType.A)
                 {
-                    if (IsIp(answerAddr))
+                    if (Convert.ToInt32(RecordType.A) == answerType)
                     {
                         ARecord aRecord = new ARecord(
                             DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
 
                         recordList.Add(aRecord);
                     }
-                    else
+                    else if(Convert.ToInt32(RecordType.CName) == answerType)
                     {
                         CNameRecord cRecord = new CNameRecord(
                             DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
@@ -264,9 +265,24 @@ namespace AuroraDNS
                 }
                 else if (type == RecordType.Aaaa)
                 {
-                    AaaaRecord aaaaRecord = new AaaaRecord(
-                        DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
-                    recordList.Add(aaaaRecord);
+                    if (Convert.ToInt32(RecordType.Aaaa) == answerType)
+                    {
+                        AaaaRecord aaaaRecord = new AaaaRecord(
+                            DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+                        recordList.Add(aaaaRecord);
+                    }
+                    else if (Convert.ToInt32(RecordType.CName) == answerType)
+                    {
+                        CNameRecord cRecord = new CNameRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(cRecord);
+                    }
+                }
+                else if (type == RecordType.CName && answerType == Convert.ToInt32(RecordType.CName))
+                {
+                    CNameRecord cRecord = new CNameRecord(
+                        DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                    recordList.Add(cRecord);
                 }
             }
 
