@@ -198,9 +198,14 @@ namespace AuroraDNS
                     else
                     {
                         response.ReturnCode = ReturnCode.NoError;
+
                         foreach (DnsQuestion dnsQuestion in query.Questions)
                         {
                             response.ReturnCode = ReturnCode.NoError;
+                            if (ADnsSetting.DebugLog)
+                            {
+                                Console.WriteLine($@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name} | {query.Questions[0].RecordType.ToString().ToUpper()}");
+                            }
 
                             var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
                                 dnsQuestion.Name.ToString(),
@@ -251,11 +256,10 @@ namespace AuroraDNS
             }
 
             JsonValue dnsJsonValue = Json.Parse(dnsStr);
+
             int statusCode = dnsJsonValue.AsObjectGetInt("Status");
             if (statusCode != 0)
-            {
                 return (new List<dynamic>(), statusCode);
-            }
 
             if (dnsStr.Contains("\"Answer\""))
             {
@@ -308,6 +312,12 @@ namespace AuroraDNS
                         CNameRecord cRecord = new CNameRecord(
                             DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
                         recordList.Add(cRecord);
+                    }
+                    else if (type == RecordType.Ptr && answerType == Convert.ToInt32(RecordType.Ptr))
+                    {
+                        PtrRecord ptrRecord = new PtrRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(ptrRecord);
                     }
                 }
             }
