@@ -319,6 +319,20 @@ namespace AuroraDNS
                             DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
                         recordList.Add(ptrRecord);
                     }
+                    else if (type == RecordType.Ns && answerType == Convert.ToInt32(RecordType.Ns))
+                    {
+                        NsRecord nsRecord = new NsRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(nsRecord);
+                    }
+                    else if (type == RecordType.Mx && answerType == Convert.ToInt32(RecordType.Mx))
+                    {
+                        MxRecord nsRecord = new MxRecord(
+                            DomainName.Parse(answerDomainName), ttl, 
+                            ushort.Parse(answerAddr.Split(' ')[0]),
+                            DomainName.Parse(answerAddr.Split(' ')[1]));
+                        recordList.Add(nsRecord);
+                    }
                 }
             }
 
