@@ -327,11 +327,11 @@ namespace AuroraDNS
                     }
                     else if (type == RecordType.Mx && answerType == Convert.ToInt32(RecordType.Mx))
                     {
-                        MxRecord nsRecord = new MxRecord(
+                        MxRecord mxRecord = new MxRecord(
                             DomainName.Parse(answerDomainName), ttl, 
                             ushort.Parse(answerAddr.Split(' ')[0]),
                             DomainName.Parse(answerAddr.Split(' ')[1]));
-                        recordList.Add(nsRecord);
+                        recordList.Add(mxRecord);
                     }
                 }
             }
