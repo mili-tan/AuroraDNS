@@ -117,62 +117,63 @@ namespace AuroraDNS.dotNetCore
             }
         }
 
+
         private static async Task ServerOnQueryReceived(object sender, QueryReceivedEventArgs e)
         {
             if (!(e.Query is DnsMessage query))
                 return;
 
             IPAddress clientAddress = e.RemoteEndpoint.Address;
-            if (ADnsSetting.EDnsPrivacy)
-                clientAddress = ADnsSetting.EDnsIp;
-            else if (Equals(clientAddress, IPAddress.Loopback) || InSameLaNet(clientAddress, LocIPAddr))
+            if (Equals(clientAddress, IPAddress.Loopback))
+                clientAddress = MyIPAddr;
+            else if (InSameLaNet(clientAddress, LocIPAddr) && !Equals(MyIPAddr, LocIPAddr))
                 clientAddress = MyIPAddr;
 
             DnsMessage response = query.CreateResponseInstance();
 
-            if (query.Questions.Count <= 0)
-                response.ReturnCode = ReturnCode.ServerFailure;
-
-            else
+            try
             {
-                if (query.Questions[0].RecordType == RecordType.A)
+                if (query.Questions.Count <= 0)
+                    response.ReturnCode = ReturnCode.ServerFailure;
+                else
                 {
-                    foreach (DnsQuestion dnsQuestion in query.Questions)
+                    if (query.Questions[0].RecordType == RecordType.A)
                     {
-                        response.ReturnCode = ReturnCode.NoError;
-
-                        if (ADnsSetting.DebugLog)
+                        foreach (DnsQuestion dnsQuestion in query.Questions)
                         {
-                            Console.WriteLine(@"| " + clientAddress + @" : " + dnsQuestion.Name);
-                        }
-
-                        if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))
-                        {
-                            //BlackList
-                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, IPAddress.Any);
-                            response.AnswerRecords.Add(blackRecord);
+                            response.ReturnCode = ReturnCode.NoError;
                             if (ADnsSetting.DebugLog)
                             {
-                                Console.WriteLine(@"|- BlackList");
+                                Console.WriteLine($@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name}");
                             }
-                        }
 
-                        else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name))
-                        {
-                            //WhiteList
-                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, WhiteList[dnsQuestion.Name]);
-                            response.AnswerRecords.Add(blackRecord);
-                            if (ADnsSetting.DebugLog)
+                            if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))
                             {
-                                Console.WriteLine(@"|- WhiteList");
+                                if (ADnsSetting.DebugLog)
+                                {
+                                    Console.WriteLine(@"|- BlackList");
+                                }
+
+                                //BlackList
+                                response.ReturnCode = ReturnCode.NxDomain;
+                                //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
                             }
-                        }
 
-                        else
-                        {
-                            //Resolve
-                            try
+                            else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name))
                             {
+                                if (ADnsSetting.DebugLog)
+                                {
+                                    Console.WriteLine(@"|- WhiteList");
+                                }
+
+                                //WhiteList
+                                ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, WhiteList[dnsQuestion.Name]);
+                                response.AnswerRecords.Add(blackRecord);
+                            }
+
+                            else
+                            {
+                                //Resolve
                                 var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
                                     dnsQuestion.Name.ToString(),
                                     ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
@@ -185,20 +186,49 @@ namespace AuroraDNS.dotNetCore
                                 }
                                 else
                                 {
-                                    response.ReturnCode = (ReturnCode) statusCode;
+                                    response.ReturnCode = (ReturnCode)statusCode;
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                response.ReturnCode = ReturnCode.ServerFailure;
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine(@"| " + ex);
-                                Console.ForegroundColor = OriginColor;
                             }
                         }
 
                     }
+                    else
+                    {
+                        response.ReturnCode = ReturnCode.NoError;
+
+                        foreach (DnsQuestion dnsQuestion in query.Questions)
+                        {
+                            response.ReturnCode = ReturnCode.NoError;
+                            if (ADnsSetting.DebugLog)
+                            {
+                                Console.WriteLine($@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name} | {query.Questions[0].RecordType.ToString().ToUpper()}");
+                            }
+
+                            var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
+                                dnsQuestion.Name.ToString(),
+                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy, query.Questions[0].RecordType);
+
+                            if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
+                            {
+                                foreach (var item in resolvedDnsList)
+                                {
+                                    response.AnswerRecords.Add(item);
+                                }
+                            }
+                            else
+                            {
+                                response.ReturnCode = (ReturnCode)statusCode;
+                            }
+                        }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                response.ReturnCode = ReturnCode.ServerFailure;
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(@"| " + ex);
+                Console.ForegroundColor = OriginColor;
             }
 
             e.Response = response;
@@ -206,7 +236,7 @@ namespace AuroraDNS.dotNetCore
         }
 
         private static (List<dynamic> list, int statusCode) ResolveOverHttps(string clientIpAddress, string domainName,
-            bool proxyEnable = false, IWebProxy wProxy = null)
+            bool proxyEnable = false, IWebProxy wProxy = null, RecordType type = RecordType.A)
         {
             string dnsStr;
             List<dynamic> recordList = new List<dynamic>();
@@ -219,40 +249,92 @@ namespace AuroraDNS.dotNetCore
                 dnsStr = webClient.DownloadString(
                     ADnsSetting.HttpsDnsUrl +
                     @"?ct=application/dns-json&" +
-                    $"name={domainName}&type=A&edns_client_subnet={clientIpAddress}");
+                    $"name={domainName}&type={type.ToString().ToUpper()}&edns_client_subnet={clientIpAddress}");
             }
 
             JsonValue dnsJsonValue = Json.Parse(dnsStr);
+
             int statusCode = dnsJsonValue.AsObjectGetInt("Status");
             if (statusCode != 0)
+                return (new List<dynamic>(), statusCode);
+
+            if (dnsStr.Contains("\"Answer\""))
             {
-                return (null, statusCode);
-            }
+                var dnsAnswerJsonList = dnsJsonValue.AsObjectGetArray("Answer");
 
-            List<JsonValue> dnsAnswerJsonList = dnsJsonValue.AsObjectGetArray("Answer");
-
-            foreach (var itemJsonValue in dnsAnswerJsonList)
-            {
-                string answerAddr = itemJsonValue.AsObjectGetString("data");
-                string answerDomainName = itemJsonValue.AsObjectGetString("name");
-                int ttl = itemJsonValue.AsObjectGetInt("TTL");
-
-                if (IsIp(answerAddr))
+                foreach (var itemJsonValue in dnsAnswerJsonList)
                 {
-                    ARecord aRecord = new ARecord(
-                        DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+                    string answerAddr = itemJsonValue.AsObjectGetString("data");
+                    string answerDomainName = itemJsonValue.AsObjectGetString("name");
+                    int answerType = itemJsonValue.AsObjectGetInt("type");
+                    int ttl = itemJsonValue.AsObjectGetInt("TTL");
 
-                    recordList.Add(aRecord);
-                }
-                else
-                {
-                    CNameRecord cRecord = new CNameRecord(
-                        DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                    if (type == RecordType.A)
+                    {
+                        if (Convert.ToInt32(RecordType.A) == answerType)
+                        {
+                            ARecord aRecord = new ARecord(
+                                DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
 
-                    recordList.Add(cRecord);
+                            recordList.Add(aRecord);
+                        }
+                        else if (Convert.ToInt32(RecordType.CName) == answerType)
+                        {
+                            CNameRecord cRecord = new CNameRecord(
+                                DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
 
-                    //recordList.AddRange(ResolveOverHttps(clientIpAddress,answerAddr));
-                    //return recordList;
+                            recordList.Add(cRecord);
+
+                            //recordList.AddRange(ResolveOverHttps(clientIpAddress,answerAddr));
+                            //return recordList;
+                        }
+                    }
+                    else if (type == RecordType.Aaaa)
+                    {
+                        if (Convert.ToInt32(RecordType.Aaaa) == answerType)
+                        {
+                            AaaaRecord aaaaRecord = new AaaaRecord(
+                                DomainName.Parse(answerDomainName), ttl, IPAddress.Parse(answerAddr));
+                            recordList.Add(aaaaRecord);
+                        }
+                        else if (Convert.ToInt32(RecordType.CName) == answerType)
+                        {
+                            CNameRecord cRecord = new CNameRecord(
+                                DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                            recordList.Add(cRecord);
+                        }
+                    }
+                    else if (type == RecordType.CName && answerType == Convert.ToInt32(RecordType.CName))
+                    {
+                        CNameRecord cRecord = new CNameRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(cRecord);
+                    }
+                    else if (type == RecordType.Ns && answerType == Convert.ToInt32(RecordType.Ns))
+                    {
+                        NsRecord nsRecord = new NsRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(nsRecord);
+                    }
+                    else if (type == RecordType.Mx && answerType == Convert.ToInt32(RecordType.Mx))
+                    {
+                        MxRecord mxRecord = new MxRecord(
+                            DomainName.Parse(answerDomainName), ttl,
+                            ushort.Parse(answerAddr.Split(' ')[0]),
+                            DomainName.Parse(answerAddr.Split(' ')[1]));
+                        recordList.Add(mxRecord);
+                    }
+                    else if (type == RecordType.Txt && answerType == Convert.ToInt32(RecordType.Txt))
+                    {
+                        TxtRecord txtRecord = new TxtRecord(DomainName.Parse(answerDomainName), ttl, answerAddr);
+                        recordList.Add(txtRecord);
+                    }
+                    else if (type == RecordType.Ptr && answerType == Convert.ToInt32(RecordType.Ptr))
+                    {
+                        PtrRecord ptrRecord = new PtrRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(ptrRecord);
+                    }
                 }
             }
 
