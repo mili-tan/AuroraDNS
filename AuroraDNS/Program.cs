@@ -313,12 +313,6 @@ namespace AuroraDNS
                             DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
                         recordList.Add(cRecord);
                     }
-                    else if (type == RecordType.Ptr && answerType == Convert.ToInt32(RecordType.Ptr))
-                    {
-                        PtrRecord ptrRecord = new PtrRecord(
-                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
-                        recordList.Add(ptrRecord);
-                    }
                     else if (type == RecordType.Ns && answerType == Convert.ToInt32(RecordType.Ns))
                     {
                         NsRecord nsRecord = new NsRecord(
@@ -332,6 +326,17 @@ namespace AuroraDNS
                             ushort.Parse(answerAddr.Split(' ')[0]),
                             DomainName.Parse(answerAddr.Split(' ')[1]));
                         recordList.Add(mxRecord);
+                    }
+                    else if (type == RecordType.Txt && answerType == Convert.ToInt32(RecordType.Txt))
+                    {
+                        TxtRecord txtRecord = new TxtRecord(DomainName.Parse(answerDomainName), ttl, answerAddr);
+                        recordList.Add(txtRecord);
+                    }
+                    else if (type == RecordType.Ptr && answerType == Convert.ToInt32(RecordType.Ptr))
+                    {
+                        PtrRecord ptrRecord = new PtrRecord(
+                            DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
+                        recordList.Add(ptrRecord);
                     }
                 }
             }
