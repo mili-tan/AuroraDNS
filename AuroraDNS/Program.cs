@@ -140,73 +140,44 @@ namespace AuroraDNS
                     response.ReturnCode = ReturnCode.ServerFailure;
                 else
                 {
-                    if (query.Questions[0].RecordType == RecordType.A)
-                    {
-                        foreach (DnsQuestion dnsQuestion in query.Questions)
-                        {
-                            response.ReturnCode = ReturnCode.NoError;
-                            if (ADnsSetting.DebugLog)
-                            {
-                                Console.WriteLine($@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name}");
-                            }
-
-                            if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name))
-                            {
-                                if (ADnsSetting.DebugLog)
-                                {
-                                    Console.WriteLine(@"|- BlackList");
-                                }
-
-                                //BlackList
-                                response.ReturnCode = ReturnCode.NxDomain;
-                                //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
-                            }
-
-                            else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name))
-                            {
-                                if (ADnsSetting.DebugLog)
-                                {
-                                    Console.WriteLine(@"|- WhiteList");
-                                }
-
-                                //WhiteList
-                                ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, WhiteList[dnsQuestion.Name]);
-                                response.AnswerRecords.Add(blackRecord);
-                            }
-
-                            else
-                            {
-                                //Resolve
-                                var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
-                                    dnsQuestion.Name.ToString(),
-                                    ADnsSetting.ProxyEnable, ADnsSetting.WProxy);
-                                if (resolvedDnsList != null)
-                                {
-                                    foreach (var item in resolvedDnsList)
-                                    {
-                                        response.AnswerRecords.Add(item);
-                                    }
-                                }
-                                else
-                                {
-                                    response.ReturnCode = (ReturnCode) statusCode;
-                                }
-                            }
-                        }
-
-                    }
-                    else
+                    foreach (DnsQuestion dnsQuestion in query.Questions)
                     {
                         response.ReturnCode = ReturnCode.NoError;
-
-                        foreach (DnsQuestion dnsQuestion in query.Questions)
+                        if (ADnsSetting.DebugLog)
                         {
-                            response.ReturnCode = ReturnCode.NoError;
+                            Console.WriteLine(
+                                $@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name} | {query.Questions[0].RecordType.ToString().ToUpper()}");
+                        }
+
+                        if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name)
+                                                        && query.Questions[0].RecordType == RecordType.A)
+                        {
                             if (ADnsSetting.DebugLog)
                             {
-                                Console.WriteLine($@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name} | {query.Questions[0].RecordType.ToString().ToUpper()}");
+                                Console.WriteLine(@"|- BlackList");
                             }
 
+                            //BlackList
+                            response.ReturnCode = ReturnCode.NxDomain;
+                            //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
+                        }
+
+                        else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name)
+                                                             && query.Questions[0].RecordType == RecordType.A)
+                        {
+                            if (ADnsSetting.DebugLog)
+                            {
+                                Console.WriteLine(@"|- WhiteList");
+                            }
+
+                            //WhiteList
+                            ARecord blackRecord = new ARecord(dnsQuestion.Name, 10, WhiteList[dnsQuestion.Name]);
+                            response.AnswerRecords.Add(blackRecord);
+                        }
+
+                        else
+                        {
+                            //Resolve
                             var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
                                 dnsQuestion.Name.ToString(),
                                 ADnsSetting.ProxyEnable, ADnsSetting.WProxy, query.Questions[0].RecordType);
