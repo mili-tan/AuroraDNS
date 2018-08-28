@@ -146,11 +146,11 @@ namespace AuroraDNS
                         if (ADnsSetting.DebugLog)
                         {
                             Console.WriteLine(
-                                $@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name} | {query.Questions[0].RecordType.ToString().ToUpper()}");
+                                $@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name} | {dnsQuestion.RecordType.ToString().ToUpper()}");
                         }
 
                         if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name)
-                                                        && query.Questions[0].RecordType == RecordType.A)
+                                                        && dnsQuestion.RecordType == RecordType.A)
                         {
                             if (ADnsSetting.DebugLog)
                             {
@@ -163,7 +163,7 @@ namespace AuroraDNS
                         }
 
                         else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name)
-                                                             && query.Questions[0].RecordType == RecordType.A)
+                                                             && dnsQuestion.RecordType == RecordType.A)
                         {
                             if (ADnsSetting.DebugLog)
                             {
@@ -180,7 +180,7 @@ namespace AuroraDNS
                             //Resolve
                             var (resolvedDnsList, statusCode) = ResolveOverHttps(clientAddress.ToString(),
                                 dnsQuestion.Name.ToString(),
-                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy, query.Questions[0].RecordType);
+                                ADnsSetting.ProxyEnable, ADnsSetting.WProxy, dnsQuestion.RecordType);
 
                             if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
                             {
