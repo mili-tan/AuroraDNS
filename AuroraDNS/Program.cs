@@ -39,6 +39,7 @@ namespace AuroraDNS
             public static IPAddress EDnsIp = IPAddress.Any;
             public static bool EDnsCustomize;
             public static bool ProxyEnable;
+            public static bool IPv6Enable = true;
             public static bool DebugLog;
             public static bool BlackListEnable;
             public static bool WhiteListEnable;
@@ -263,7 +264,7 @@ namespace AuroraDNS
                             //return recordList;
                         }
                     }
-                    else if (type == RecordType.Aaaa)
+                    else if (type == RecordType.Aaaa && ADnsSetting.IPv6Enable)
                     {
                         if (Convert.ToInt32(RecordType.Aaaa) == answerType)
                         {
@@ -384,6 +385,15 @@ namespace AuroraDNS
 
             try
             {
+                ADnsSetting.IPv6Enable = configJson.AsObjectGetBool("IPv6Enable");
+            }
+            catch
+            {
+                ADnsSetting.IPv6Enable = true;
+            }
+
+            try
+            {
                 ADnsSetting.EDnsCustomize = configJson.AsObjectGetBool("EDnsPrivacy");
             }
             catch
@@ -426,6 +436,7 @@ namespace AuroraDNS
             Console.WriteLine(@"BlackList   : " + ADnsSetting.BlackListEnable);
             Console.WriteLine(@"WhiteList   : " + ADnsSetting.WhiteListEnable);
             Console.WriteLine(@"ProxyEnable : " + ADnsSetting.ProxyEnable);
+            Console.WriteLine(@"IPv6Enable  : " + ADnsSetting.IPv6Enable);
             Console.WriteLine(@"DebugLog    : " + ADnsSetting.DebugLog);
             Console.WriteLine(@"EDnsClient  : " + ADnsSetting.EDnsIp);
             Console.WriteLine(@"HttpsDns    : " + ADnsSetting.HttpsDnsUrl);
