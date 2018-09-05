@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using ARSoft.Tools.Net;
@@ -314,11 +313,6 @@ namespace AuroraDNS
             }
 
             return (recordList, statusCode);
-        }
-
-        private static bool IsIp(string ip)
-        {
-            return Regex.IsMatch(ip, @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$");
         }
 
         private static bool InSameLaNet(IPAddress ipA, IPAddress ipB)
