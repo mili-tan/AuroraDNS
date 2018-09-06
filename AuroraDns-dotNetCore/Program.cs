@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
@@ -36,6 +35,7 @@ namespace AuroraDNS.dotNetCore
             public static IPAddress EDnsIp = IPAddress.Any;
             public static bool EDnsPrivacy;
             public static bool ProxyEnable;
+            public static bool IPv6Enable = true;
             public static bool DebugLog;
             public static bool BlackListEnable;
             public static bool WhiteListEnable;
@@ -257,7 +257,7 @@ namespace AuroraDNS.dotNetCore
                             //return recordList;
                         }
                     }
-                    else if (type == RecordType.Aaaa)
+                    else if (type == RecordType.Aaaa && ADnsSetting.IPv6Enable)
                     {
                         if (Convert.ToInt32(RecordType.Aaaa) == answerType)
                         {
@@ -307,11 +307,6 @@ namespace AuroraDNS.dotNetCore
             }
 
             return (recordList, statusCode);
-        }
-
-        private static bool IsIp(string ip)
-        {
-            return Regex.IsMatch(ip, @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$");
         }
 
         private static bool InSameLaNet(IPAddress ipA, IPAddress ipB)
@@ -374,6 +369,15 @@ namespace AuroraDNS.dotNetCore
             catch
             {
                 ADnsSetting.ProxyEnable = false;
+            }
+
+            try
+            {
+                ADnsSetting.IPv6Enable = configJson.AsObjectGetBool("IPv6Enable");
+            }
+            catch
+            {
+                ADnsSetting.IPv6Enable = true;
             }
 
             try
