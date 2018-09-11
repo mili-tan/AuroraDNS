@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
 using MojoUnity;
+using static System.Net.ServicePointManager;
 
 // ReSharper disable UnusedParameter.Local
 #pragma warning disable 1998
@@ -42,6 +43,7 @@ namespace AuroraDNS
             public static bool DebugLog;
             public static bool BlackListEnable;
             public static bool WhiteListEnable;
+            public static bool AllowSelfSignedCert;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
@@ -49,9 +51,16 @@ namespace AuroraDNS
         {
             Console.WriteLine(Resource.ASCII);
 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             OriginColor = Console.ForegroundColor;
             LocIPAddr = IPAddress.Parse(GetLocIp());
+
+            SecurityProtocol = SecurityProtocolType.Tls12;
+            if (ADnsSetting.AllowSelfSignedCert)
+            {
+                ServerCertificateValidationCallback +=
+                    (sender, cert, chain, sslPolicyErrors) => true;
+            }
+
             if (Thread.CurrentThread.CurrentCulture.Name == "zh-CN")
             {
                 IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("http://members.3322.org/dyndns/getip").Trim());
@@ -384,6 +393,15 @@ namespace AuroraDNS
             catch
             {
                 ADnsSetting.IPv6Enable = true;
+            }
+
+            try
+            {
+                ADnsSetting.AllowSelfSignedCert = configJson.AsObjectGetBool("AllowSelfSignedCert");
+            }
+            catch
+            {
+                ADnsSetting.AllowSelfSignedCert = false;
             }
 
             try
