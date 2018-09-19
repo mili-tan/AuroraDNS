@@ -24,6 +24,7 @@ namespace AuroraDNS
         private static IPAddress LocIPAddr;
         private static ConsoleColor OriginColor;
         private static List<DomainName> BlackList;
+        private static List<DomainName> ChinaList;
         private static Dictionary<DomainName, IPAddress> WhiteList;
 
         public static class ADnsSetting
@@ -42,6 +43,7 @@ namespace AuroraDNS
             public static bool IPv6Enable = true;
             public static bool DebugLog;
             public static bool BlackListEnable;
+            public static bool ChinaListEnable;
             public static bool WhiteListEnable;
             public static bool AllowSelfSignedCert;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
@@ -87,6 +89,22 @@ namespace AuroraDNS
                 {
                     Console.WriteLine(@"-------Black List-------");
                     foreach (var itemName in BlackList)
+                    {
+                        Console.WriteLine(itemName.ToString());
+                    }
+                }
+            }
+
+            if (ADnsSetting.ChinaListEnable)
+            {
+                string[] chinaListStrs = File.ReadAllLines("china.list");
+
+                ChinaList = Array.ConvertAll(chinaListStrs, DomainName.Parse).ToList();
+
+                if (ADnsSetting.DebugLog)
+                {
+                    Console.WriteLine(@"-------China List-------");
+                    foreach (var itemName in ChinaList)
                     {
                         Console.WriteLine(itemName.ToString());
                     }
