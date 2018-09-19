@@ -189,6 +189,12 @@ namespace AuroraDNS
                             //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
                         }
 
+                        if (ADnsSetting.ChinaListEnable && ChinaList.Contains(dnsQuestion.Name)
+                                                        && dnsQuestion.RecordType == RecordType.A)
+                        {
+
+                        }
+
                         else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name)
                                                              && dnsQuestion.RecordType == RecordType.A)
                         {
@@ -388,6 +394,15 @@ namespace AuroraDNS
 
             try
             {
+                ADnsSetting.ChinaListEnable = configJson.AsObjectGetBool("ChinaList");
+            }
+            catch
+            {
+                ADnsSetting.ChinaListEnable = false;
+            }
+
+            try
+            {
                 ADnsSetting.WhiteListEnable = configJson.AsObjectGetBool("WhiteList");
             }
             catch
@@ -465,6 +480,7 @@ namespace AuroraDNS
             Console.WriteLine(@"Listen      : " + ADnsSetting.ListenIp);
             Console.WriteLine(@"BlackList   : " + ADnsSetting.BlackListEnable);
             Console.WriteLine(@"WhiteList   : " + ADnsSetting.WhiteListEnable);
+            Console.WriteLine(@"ChinaList   : " + ADnsSetting.WhiteListEnable);
             Console.WriteLine(@"ProxyEnable : " + ADnsSetting.ProxyEnable);
             Console.WriteLine(@"IPv6Enable  : " + ADnsSetting.IPv6Enable);
             Console.WriteLine(@"DebugLog    : " + ADnsSetting.DebugLog);
