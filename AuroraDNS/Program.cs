@@ -192,7 +192,19 @@ namespace AuroraDNS
                         if (ADnsSetting.ChinaListEnable && ChinaList.Contains(dnsQuestion.Name)
                                                         && dnsQuestion.RecordType == RecordType.A)
                         {
+                            var resolvedDnsList = ResolveOverDNSPod(dnsQuestion.Name.ToString());
 
+                            if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
+                            {
+                                foreach (var item in resolvedDnsList)
+                                {
+                                    response.AnswerRecords.Add(item);
+                                }
+                            }
+                            else
+                            {
+                                response.ReturnCode = ReturnCode.NxDomain;
+                            }
                         }
 
                         else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name)
@@ -348,7 +360,7 @@ namespace AuroraDNS
             return (recordList, statusCode);
         }
 
-        public static List<dynamic> DnsPodResolve(string domainName)
+        public static List<dynamic> ResolveOverDNSPod(string domainName)
         {
             List<dynamic> recordList = new List<dynamic>();
 
