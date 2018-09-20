@@ -348,6 +348,25 @@ namespace AuroraDNS
             return (recordList, statusCode);
         }
 
+        public static List<dynamic> DnsPodResolve(string domainName)
+        {
+            List<dynamic> recordList = new List<dynamic>();
+
+            string dnsStr = new WebClient().DownloadString(
+                $"http://119.29.29.29/d?dn={domainName}");
+            var dnsAnswerList = dnsStr.Split(';');
+
+            foreach (var item in dnsAnswerList)
+            {
+                ARecord aRecord = new ARecord(
+                    DomainName.Parse(domainName), 600, IPAddress.Parse(item));
+
+                recordList.Add(aRecord);
+            }
+
+            return recordList;
+        }
+
         private static bool InSameLaNet(IPAddress ipA, IPAddress ipB)
         {
             return ipA.GetHashCode() % 65536L == ipB.GetHashCode() % 65536L;
