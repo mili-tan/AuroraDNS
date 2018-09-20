@@ -113,7 +113,12 @@ namespace AuroraDNS
 
             if (ADnsSetting.WhiteListEnable)
             {
-                string[] whiteListStrs = File.ReadAllLines("white.list");
+                string[] whiteListStrs;
+                if (File.Exists("white.list"))
+                    whiteListStrs = File.ReadAllLines("white.list");
+                else
+                    whiteListStrs = File.ReadAllLines("rewrite.list");
+
                 WhiteList = whiteListStrs.Select(
                     itemStr => itemStr.Split(' ', ',', '\t')).ToDictionary(
                     whiteSplit => DomainName.Parse(whiteSplit[1]),
@@ -438,7 +443,7 @@ namespace AuroraDNS
 
             try
             {
-                ADnsSetting.WhiteListEnable = configJson.AsObjectGetBool("WhiteList");
+                ADnsSetting.WhiteListEnable = configJson.AsObjectGetBool("RewriteList");
             }
             catch
             {
@@ -474,7 +479,7 @@ namespace AuroraDNS
 
             try
             {
-                ADnsSetting.EDnsCustomize = configJson.AsObjectGetBool("EDnsPrivacy");
+                ADnsSetting.EDnsCustomize = configJson.AsObjectGetBool("EDnsCustomize");
             }
             catch
             {
@@ -512,15 +517,15 @@ namespace AuroraDNS
                 ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
             }
 
-            Console.WriteLine(@"Listen      : " + ADnsSetting.ListenIp);
-            Console.WriteLine(@"BlackList   : " + ADnsSetting.BlackListEnable);
-            Console.WriteLine(@"WhiteList   : " + ADnsSetting.WhiteListEnable);
-            Console.WriteLine(@"ChinaList   : " + ADnsSetting.WhiteListEnable);
-            Console.WriteLine(@"ProxyEnable : " + ADnsSetting.ProxyEnable);
-            Console.WriteLine(@"IPv6Enable  : " + ADnsSetting.IPv6Enable);
-            Console.WriteLine(@"DebugLog    : " + ADnsSetting.DebugLog);
-            Console.WriteLine(@"EDnsClient  : " + ADnsSetting.EDnsIp);
-            Console.WriteLine(@"HttpsDns    : " + ADnsSetting.HttpsDnsUrl);
+            Console.WriteLine(@"Listen        : " + ADnsSetting.ListenIp);
+            Console.WriteLine(@"BlackList     : " + ADnsSetting.BlackListEnable);
+            Console.WriteLine(@"RewriteList   : " + ADnsSetting.WhiteListEnable);
+            Console.WriteLine(@"ChinaList     : " + ADnsSetting.WhiteListEnable);
+            Console.WriteLine(@"ProxyEnable   : " + ADnsSetting.ProxyEnable);
+            Console.WriteLine(@"IPv6Enable    : " + ADnsSetting.IPv6Enable);
+            Console.WriteLine(@"DebugLog      : " + ADnsSetting.DebugLog);
+            Console.WriteLine(@"EDnsClient    : " + ADnsSetting.EDnsIp);
+            Console.WriteLine(@"HttpsDns      : " + ADnsSetting.HttpsDnsUrl);
             Console.WriteLine(@"EDnsCustomize : " + ADnsSetting.EDnsCustomize);
             if (ADnsSetting.AllowSelfSignedCert)
             {
