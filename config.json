@@ -1,0 +1,13 @@
+{
+  "Listen" : "0.0.0.0",
+  "BlackList" : false,
+  "RewriteList" : false,
+  "ChinaList" : false,
+  "DebugLog" : true,
+  "EDnsCustomize" : false,
+  "EDnsClientIp" : "0.0.0.0",
+  "ProxyEnable" : false,
+  "AllowSelfSignedCert" : false,
+  "HttpsDns" : "https://1.0.0.1/dns-query",
+  "Proxy" : "127.0.0.1:1080" 
+}
