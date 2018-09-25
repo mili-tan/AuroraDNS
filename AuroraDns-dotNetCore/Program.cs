@@ -16,7 +16,7 @@ namespace AuroraDNS.dotNetCore
 
     static class Program
     {
-        private static IPAddress MyIPAddr;
+        private static IPAddress IntIPAddr;
         private static ConsoleColor OriginColor;
         private static IPAddress LocIPAddr;
         private static List<DomainName> BlackList;
@@ -33,7 +33,7 @@ namespace AuroraDNS.dotNetCore
 
             public static IPAddress ListenIp = IPAddress.Any;
             public static IPAddress EDnsIp = IPAddress.Any;
-            public static bool EDnsPrivacy;
+            public static bool EDnsCustomize;
             public static bool ProxyEnable;
             public static bool IPv6Enable = true;
             public static bool DebugLog;
@@ -55,7 +55,7 @@ namespace AuroraDNS.dotNetCore
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             OriginColor = Console.ForegroundColor;
             LocIPAddr = IPAddress.Parse(GetLocIp());
-            MyIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org"));
+            IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org"));
 
             Console.Clear();
 
@@ -127,10 +127,20 @@ namespace AuroraDNS.dotNetCore
                 return;
 
             IPAddress clientAddress = e.RemoteEndpoint.Address;
-            if (Equals(clientAddress, IPAddress.Loopback))
-                clientAddress = MyIPAddr;
-            else if (InSameLaNet(clientAddress, LocIPAddr) && !Equals(MyIPAddr, LocIPAddr))
-                clientAddress = MyIPAddr;
+            if (ADnsSetting.EDnsCustomize)
+                if (Equals(ADnsSetting.EDnsIp, IPAddress.Parse("0.0.0.1")))
+                {
+                    clientAddress = IPAddress.Parse(IntIPAddr.ToString().Substring(0,
+                                                        IntIPAddr.ToString().LastIndexOf(".", StringComparison.Ordinal)) + ".0");
+                }
+                else
+                {
+                    clientAddress = ADnsSetting.EDnsIp;
+                }
+            else if (Equals(clientAddress, IPAddress.Loopback))
+                clientAddress = IntIPAddr;
+            else if (InSameLaNet(clientAddress, LocIPAddr) && !Equals(IntIPAddr, LocIPAddr))
+                clientAddress = IntIPAddr;
 
             DnsMessage response = query.CreateResponseInstance();
 
@@ -387,11 +397,11 @@ namespace AuroraDNS.dotNetCore
 
             try
             {
-                ADnsSetting.EDnsPrivacy = configJson.AsObjectGetBool("EDnsCustomize");
+                ADnsSetting.EDnsCustomize = configJson.AsObjectGetBool("EDnsCustomize");
             }
             catch
             {
-                ADnsSetting.EDnsPrivacy = false;
+                ADnsSetting.EDnsCustomize = false;
             }
 
             try
@@ -430,7 +440,7 @@ namespace AuroraDNS.dotNetCore
             Console.WriteLine(@"RewriteList : " + ADnsSetting.WhiteListEnable);
             Console.WriteLine(@"ProxyEnable : " + ADnsSetting.ProxyEnable);
             Console.WriteLine(@"DebugLog    : " + ADnsSetting.DebugLog);
-            Console.WriteLine(@"EDnsPrivacy : " + ADnsSetting.EDnsPrivacy);
+            Console.WriteLine(@"EDnsPrivacy : " + ADnsSetting.EDnsCustomize);
             Console.WriteLine(@"EDnsClient  : " + ADnsSetting.EDnsIp);
             Console.WriteLine(@"HttpsDns    : " + ADnsSetting.HttpsDnsUrl);
 

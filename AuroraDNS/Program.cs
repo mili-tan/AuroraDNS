@@ -158,7 +158,15 @@ namespace AuroraDNS
 
             IPAddress clientAddress = e.RemoteEndpoint.Address;
             if (ADnsSetting.EDnsCustomize)
-                clientAddress = ADnsSetting.EDnsIp;
+                if (Equals(ADnsSetting.EDnsIp, IPAddress.Parse("0.0.0.1")))
+                {
+                    clientAddress = IPAddress.Parse(IntIPAddr.ToString().Substring(0,
+                                                        IntIPAddr.ToString().LastIndexOf(".", StringComparison.Ordinal)) + ".0");
+                }
+                else
+                {
+                    clientAddress = ADnsSetting.EDnsIp;
+                }
             else if (Equals(clientAddress, IPAddress.Loopback))
                 clientAddress = IntIPAddr;
             else if (InSameLaNet(clientAddress, LocIPAddr) && !Equals(IntIPAddr, LocIPAddr))
