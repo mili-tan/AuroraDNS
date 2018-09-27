@@ -199,7 +199,6 @@ namespace AuroraDNS
 
                             //BlackList
                             response.ReturnCode = ReturnCode.NxDomain;
-                            //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
                         }
 
                         if (ADnsSetting.ChinaListEnable && dnsQuestion.RecordType == RecordType.A)
@@ -320,9 +319,6 @@ namespace AuroraDNS
                                 DomainName.Parse(answerDomainName), ttl, DomainName.Parse(answerAddr));
 
                             recordList.Add(cRecord);
-
-                            //recordList.AddRange(ResolveOverHttps(clientIpAddress,answerAddr));
-                            //return recordList;
                         }
                     }
                     else if (type == RecordType.Aaaa && ADnsSetting.IPv6Enable)
