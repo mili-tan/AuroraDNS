@@ -20,6 +20,7 @@ namespace AuroraDNS.dotNetCore
         private static ConsoleColor OriginColor;
         private static IPAddress LocIPAddr;
         private static List<DomainName> BlackList;
+        private static List<DomainName> ChinaList;
         private static Dictionary<DomainName, IPAddress> WhiteList;
 
         public static class ADnsSetting
@@ -39,6 +40,7 @@ namespace AuroraDNS.dotNetCore
             public static bool DebugLog;
             public static bool BlackListEnable;
             public static bool WhiteListEnable;
+            public static bool ChinaListEnable;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
@@ -99,6 +101,22 @@ namespace AuroraDNS.dotNetCore
                     foreach (var itemName in WhiteList)
                     {
                         Console.WriteLine(itemName.Key + @" : " + itemName.Value);
+                    }
+                }
+            }
+
+            if (ADnsSetting.ChinaListEnable)
+            {
+                string[] chinaListStrs = File.ReadAllLines("china.list");
+
+                ChinaList = Array.ConvertAll(chinaListStrs, DomainName.Parse).ToList();
+
+                if (ADnsSetting.DebugLog)
+                {
+                    Console.WriteLine(@"-------China List-------");
+                    foreach (var itemName in ChinaList)
+                    {
+                        Console.WriteLine(itemName.ToString());
                     }
                 }
             }
@@ -170,6 +188,28 @@ namespace AuroraDNS.dotNetCore
                             //BlackList
                             response.ReturnCode = ReturnCode.NxDomain;
                             //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
+                        }
+
+                        if (ADnsSetting.ChinaListEnable && dnsQuestion.RecordType == RecordType.A)
+                        {
+                            if (ChinaList.Contains(dnsQuestion.Name) || dnsQuestion.Name.ToString().Contains(".cn") || dnsQuestion.Name.ToString().Contains(".xn--"))
+                            {
+                                var resolvedDnsList = ResolveOverDNSPod(dnsQuestion.Name.ToString());
+
+                                if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
+                                {
+                                    foreach (var item in resolvedDnsList)
+                                    {
+                                        response.AnswerRecords.Add(item);
+                                    }
+                                }
+                                else
+                                {
+                                    response.ReturnCode = ReturnCode.NxDomain;
+                                }
+
+                                Console.WriteLine(@"|- ChinaList - DNSPOD");
+                            }
                         }
 
                         else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name)
@@ -324,6 +364,25 @@ namespace AuroraDNS.dotNetCore
             return (recordList, statusCode);
         }
 
+        public static List<dynamic> ResolveOverDNSPod(string domainName)
+        {
+            List<dynamic> recordList = new List<dynamic>();
+
+            string dnsStr = new WebClient().DownloadString(
+                $"http://119.29.29.29/d?dn={domainName}");
+            var dnsAnswerList = dnsStr.Split(';');
+
+            foreach (var item in dnsAnswerList)
+            {
+                ARecord aRecord = new ARecord(
+                    DomainName.Parse(domainName), 600, IPAddress.Parse(item));
+
+                recordList.Add(aRecord);
+            }
+
+            return recordList;
+        }
+
         private static bool InSameLaNet(IPAddress ipA, IPAddress ipB)
         {
             return ipA.GetHashCode() % 65536L == ipB.GetHashCode() % 65536L;
@@ -375,6 +434,15 @@ namespace AuroraDNS.dotNetCore
             catch
             {
                 ADnsSetting.WhiteListEnable = false;
+            }
+
+            try
+            {
+                ADnsSetting.ChinaListEnable = configJson.AsObjectGetBool("ChinaList");
+            }
+            catch
+            {
+                ADnsSetting.ChinaListEnable = false;
             }
 
             try
@@ -438,6 +506,7 @@ namespace AuroraDNS.dotNetCore
             Console.WriteLine(@"Listen      : " + ADnsSetting.ListenIp);
             Console.WriteLine(@"BlackList   : " + ADnsSetting.BlackListEnable);
             Console.WriteLine(@"RewriteList : " + ADnsSetting.WhiteListEnable);
+            Console.WriteLine(@"ChinaList   : " + ADnsSetting.WhiteListEnable);
             Console.WriteLine(@"ProxyEnable : " + ADnsSetting.ProxyEnable);
             Console.WriteLine(@"DebugLog    : " + ADnsSetting.DebugLog);
             Console.WriteLine(@"EDnsPrivacy : " + ADnsSetting.EDnsCustomize);
