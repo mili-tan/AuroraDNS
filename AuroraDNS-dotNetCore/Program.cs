@@ -190,6 +190,8 @@ namespace AuroraDNS.dotNetCore
                             //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
                         }
 
+
+
                         else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name)
                                                              && dnsQuestion.RecordType == RecordType.A)
                         {
@@ -340,6 +342,25 @@ namespace AuroraDNS.dotNetCore
             }
 
             return (recordList, statusCode);
+        }
+
+        public static List<dynamic> ResolveOverDNSPod(string domainName)
+        {
+            List<dynamic> recordList = new List<dynamic>();
+
+            string dnsStr = new WebClient().DownloadString(
+                $"http://119.29.29.29/d?dn={domainName}");
+            var dnsAnswerList = dnsStr.Split(';');
+
+            foreach (var item in dnsAnswerList)
+            {
+                ARecord aRecord = new ARecord(
+                    DomainName.Parse(domainName), 600, IPAddress.Parse(item));
+
+                recordList.Add(aRecord);
+            }
+
+            return recordList;
         }
 
         private static bool InSameLaNet(IPAddress ipA, IPAddress ipB)
