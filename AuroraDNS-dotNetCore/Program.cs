@@ -190,7 +190,27 @@ namespace AuroraDNS.dotNetCore
                             //response.AnswerRecords.Add(new ARecord(dnsQuestion.Name, 10, IPAddress.Any));
                         }
 
+                        if (ADnsSetting.ChinaListEnable && dnsQuestion.RecordType == RecordType.A)
+                        {
+                            if (ChinaList.Contains(dnsQuestion.Name) || dnsQuestion.Name.ToString().Contains(".cn") || dnsQuestion.Name.ToString().Contains(".xn--"))
+                            {
+                                var resolvedDnsList = ResolveOverDNSPod(dnsQuestion.Name.ToString());
 
+                                if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
+                                {
+                                    foreach (var item in resolvedDnsList)
+                                    {
+                                        response.AnswerRecords.Add(item);
+                                    }
+                                }
+                                else
+                                {
+                                    response.ReturnCode = ReturnCode.NxDomain;
+                                }
+
+                                Console.WriteLine(@"|- ChinaList - DNSPOD");
+                            }
+                        }
 
                         else if (ADnsSetting.WhiteListEnable && WhiteList.ContainsKey(dnsQuestion.Name)
                                                              && dnsQuestion.RecordType == RecordType.A)
