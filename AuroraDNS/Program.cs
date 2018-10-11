@@ -420,55 +420,26 @@ namespace AuroraDNS
             Console.WriteLine(@"------Read Config-------");
 
             JsonValue configJson = Json.Parse(File.ReadAllText(path));
-            if(configJson.ToString().Contains("Listen"))
-                ADnsSetting.ListenIp = IPAddress.Parse(configJson.AsObjectGetString("Listen"));
-            else 
-                ADnsSetting.ListenIp = IPAddress.Any;
 
-            if (configJson.ToString().Contains("BlackList"))
-                ADnsSetting.BlackListEnable = configJson.AsObjectGetBool("BlackList");
-            else
-                ADnsSetting.BlackListEnable = false;
+            ADnsSetting.ListenIp = configJson.ToString().Contains("Listen") ? IPAddress.Parse(configJson.AsObjectGetString("Listen")) : IPAddress.Any;
 
-            if (configJson.ToString().Contains("ChinaList"))
-                ADnsSetting.ChinaListEnable = configJson.AsObjectGetBool("ChinaList");
-            else
-                ADnsSetting.ChinaListEnable = false;
+            ADnsSetting.BlackListEnable = configJson.ToString().Contains("BlackList") && configJson.AsObjectGetBool("BlackList");
 
-            if (configJson.ToString().Contains("RewriteList"))
-                ADnsSetting.WhiteListEnable = configJson.AsObjectGetBool("RewriteList");
-            else
-                ADnsSetting.WhiteListEnable = false;
+            ADnsSetting.ChinaListEnable = configJson.ToString().Contains("ChinaList") && configJson.AsObjectGetBool("ChinaList");
 
-            if (configJson.ToString().Contains("ProxyEnable"))
-                ADnsSetting.ProxyEnable = configJson.AsObjectGetBool("ProxyEnable");
-            else
-                ADnsSetting.ProxyEnable = false;
+            ADnsSetting.WhiteListEnable = configJson.ToString().Contains("RewriteList") && configJson.AsObjectGetBool("RewriteList");
 
-            if (configJson.ToString().Contains("IPv6Enable"))
-                ADnsSetting.IPv6Enable = configJson.AsObjectGetBool("IPv6Enable");
-            else
-                ADnsSetting.IPv6Enable = true;
+            ADnsSetting.ProxyEnable = configJson.ToString().Contains("ProxyEnable") && configJson.AsObjectGetBool("ProxyEnable");
 
-            if (configJson.ToString().Contains("AllowSelfSignedCert"))
-                ADnsSetting.AllowSelfSignedCert = configJson.AsObjectGetBool("AllowSelfSignedCert");
-            else
-                ADnsSetting.AllowSelfSignedCert = false;
+            ADnsSetting.IPv6Enable = !configJson.ToString().Contains("IPv6Enable") || configJson.AsObjectGetBool("IPv6Enable");
 
-            if (configJson.ToString().Contains("EDnsCustomize"))
-                ADnsSetting.EDnsCustomize = configJson.AsObjectGetBool("EDnsCustomize");
-            else
-                ADnsSetting.EDnsCustomize = false;
+            ADnsSetting.AllowSelfSignedCert = configJson.ToString().Contains("AllowSelfSignedCert") && configJson.AsObjectGetBool("AllowSelfSignedCert");
 
-            if (configJson.ToString().Contains("DebugLog"))
-                ADnsSetting.DebugLog = configJson.AsObjectGetBool("DebugLog");
-            else
-                ADnsSetting.DebugLog = false;
+            ADnsSetting.EDnsCustomize = configJson.ToString().Contains("EDnsCustomize") && configJson.AsObjectGetBool("EDnsCustomize");
 
-            if (configJson.ToString().Contains("EDnsClientIp"))
-                ADnsSetting.EDnsIp = IPAddress.Parse(configJson.AsObjectGetString("EDnsClientIp"));
-            else
-                ADnsSetting.EDnsIp = IPAddress.Any;
+            ADnsSetting.DebugLog = configJson.ToString().Contains("DebugLog") && configJson.AsObjectGetBool("DebugLog");
+
+            ADnsSetting.EDnsIp = configJson.ToString().Contains("EDnsClientIp") ? IPAddress.Parse(configJson.AsObjectGetString("EDnsClientIp")) : IPAddress.Any;
 
             if (configJson.ToString().Contains("HttpsDns"))
             { 
@@ -478,7 +449,7 @@ namespace AuroraDNS
                     ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
                 }
             }
-            else
+
             {
                 ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
             }
