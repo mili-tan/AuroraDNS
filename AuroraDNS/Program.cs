@@ -420,105 +420,65 @@ namespace AuroraDNS
             Console.WriteLine(@"------Read Config-------");
 
             JsonValue configJson = Json.Parse(File.ReadAllText(path));
-            try
-            {
+            if(configJson.ToString().Contains("Listen"))
                 ADnsSetting.ListenIp = IPAddress.Parse(configJson.AsObjectGetString("Listen"));
-            }
-            catch 
-            {
+            else 
                 ADnsSetting.ListenIp = IPAddress.Any;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("BlackList"))
                 ADnsSetting.BlackListEnable = configJson.AsObjectGetBool("BlackList");
-            }
-            catch
-            {
+            else
                 ADnsSetting.BlackListEnable = false;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("ChinaList"))
                 ADnsSetting.ChinaListEnable = configJson.AsObjectGetBool("ChinaList");
-            }
-            catch
-            {
+            else
                 ADnsSetting.ChinaListEnable = false;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("RewriteList"))
                 ADnsSetting.WhiteListEnable = configJson.AsObjectGetBool("RewriteList");
-            }
-            catch
-            {
+            else
                 ADnsSetting.WhiteListEnable = false;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("ProxyEnable"))
                 ADnsSetting.ProxyEnable = configJson.AsObjectGetBool("ProxyEnable");
-            }
-            catch
-            {
+            else
                 ADnsSetting.ProxyEnable = false;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("IPv6Enable"))
                 ADnsSetting.IPv6Enable = configJson.AsObjectGetBool("IPv6Enable");
-            }
-            catch
-            {
+            else
                 ADnsSetting.IPv6Enable = true;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("AllowSelfSignedCert"))
                 ADnsSetting.AllowSelfSignedCert = configJson.AsObjectGetBool("AllowSelfSignedCert");
-            }
-            catch
-            {
+            else
                 ADnsSetting.AllowSelfSignedCert = false;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("EDnsCustomize"))
                 ADnsSetting.EDnsCustomize = configJson.AsObjectGetBool("EDnsCustomize");
-            }
-            catch
-            {
+            else
                 ADnsSetting.EDnsCustomize = false;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("DebugLog"))
                 ADnsSetting.DebugLog = configJson.AsObjectGetBool("DebugLog");
-            }
-            catch
-            {
+            else
                 ADnsSetting.DebugLog = false;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("EDnsClientIp"))
                 ADnsSetting.EDnsIp = IPAddress.Parse(configJson.AsObjectGetString("EDnsClientIp"));
-            }
-            catch
-            {
+            else
                 ADnsSetting.EDnsIp = IPAddress.Any;
-            }
 
-            try
-            {
+            if (configJson.ToString().Contains("HttpsDns"))
+            { 
                 ADnsSetting.HttpsDnsUrl = configJson.AsObjectGetString("HttpsDns");
                 if (string.IsNullOrEmpty(ADnsSetting.HttpsDnsUrl))
                 {
                     ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
                 }
             }
-            catch
+            else
             {
                 ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
             }
