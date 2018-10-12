@@ -449,7 +449,7 @@ namespace AuroraDNS
                     ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
                 }
             }
-
+            else
             {
                 ADnsSetting.HttpsDnsUrl = "https://1.0.0.1/dns-query";
             }
