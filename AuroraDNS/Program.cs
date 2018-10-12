@@ -464,6 +464,7 @@ namespace AuroraDNS
             Console.WriteLine(@"EDnsClient    : " + ADnsSetting.EDnsIp);
             Console.WriteLine(@"HttpsDns      : " + ADnsSetting.HttpsDnsUrl);
             Console.WriteLine(@"EDnsCustomize : " + ADnsSetting.EDnsCustomize);
+
             if (ADnsSetting.AllowSelfSignedCert)
             {
                 Console.WriteLine(@"AllowSelfSignedCert : " + ADnsSetting.AllowSelfSignedCert);

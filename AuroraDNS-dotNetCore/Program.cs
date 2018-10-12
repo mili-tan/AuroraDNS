@@ -41,6 +41,7 @@ namespace AuroraDNS.dotNetCore
             public static bool BlackListEnable;
             public static bool WhiteListEnable;
             public static bool ChinaListEnable;
+            public static bool AllowSelfSignedCert;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
 
@@ -55,6 +56,12 @@ namespace AuroraDNS.dotNetCore
                 $@"|__/ \__/  |  | \| |___  |     \__  \__/ |  \ |___ {Environment.NewLine}");
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            if (ADnsSetting.AllowSelfSignedCert)
+            {
+                ServicePointManager.ServerCertificateValidationCallback +=
+                    (sender, cert, chain, sslPolicyErrors) => true;
+            }
+
             OriginColor = Console.ForegroundColor;
             LocIPAddr = IPAddress.Parse(GetLocIp());
             IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org"));
@@ -423,6 +430,8 @@ namespace AuroraDNS.dotNetCore
 
             ADnsSetting.IPv6Enable = !configJson.ToString().Contains("IPv6Enable") || configJson.AsObjectGetBool("IPv6Enable");
 
+            ADnsSetting.AllowSelfSignedCert = configJson.ToString().Contains("AllowSelfSignedCert") && configJson.AsObjectGetBool("AllowSelfSignedCert");
+
             ADnsSetting.EDnsCustomize = configJson.ToString().Contains("EDnsCustomize") && configJson.AsObjectGetBool("EDnsCustomize");
 
             ADnsSetting.DebugLog = configJson.ToString().Contains("DebugLog") && configJson.AsObjectGetBool("DebugLog");
@@ -451,6 +460,11 @@ namespace AuroraDNS.dotNetCore
             Console.WriteLine(@"EDnsPrivacy : " + ADnsSetting.EDnsCustomize);
             Console.WriteLine(@"EDnsClient  : " + ADnsSetting.EDnsIp);
             Console.WriteLine(@"HttpsDns    : " + ADnsSetting.HttpsDnsUrl);
+
+            if (ADnsSetting.AllowSelfSignedCert)
+            {
+                Console.WriteLine(@"AllowSelfSignedCert : " + ADnsSetting.AllowSelfSignedCert);
+            }
 
             if (ADnsSetting.ProxyEnable)
             {
