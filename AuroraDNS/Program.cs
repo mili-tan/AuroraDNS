@@ -41,6 +41,7 @@ namespace AuroraDNS
             public static bool EDnsCustomize;
             public static bool ProxyEnable;
             public static bool IPv6Enable = true;
+            public static float TlsVersion = 0;
             public static bool DebugLog;
             public static bool BlackListEnable;
             public static bool ChinaListEnable;
@@ -51,12 +52,35 @@ namespace AuroraDNS
 
         static void Main(string[] args)
         {
+            if (!string.IsNullOrWhiteSpace(string.Join("", args)))
+                ReadConfig(args[0]);
+            if (File.Exists("config.json"))
+                ReadConfig("config.json");
+
+            Thread.Sleep(1500);
+            Console.Clear();
+
             Console.WriteLine(Resource.ASCII);
 
             OriginColor = Console.ForegroundColor;
             LocIPAddr = IPAddress.Parse(GetLocIp());
 
-            SecurityProtocol = SecurityProtocolType.Tls12;
+            switch (ADnsSetting.TlsVersion)
+            {
+                case 1:
+                    SecurityProtocol = SecurityProtocolType.Tls;
+                    break;
+                case 1.1F:
+                    SecurityProtocol = SecurityProtocolType.Tls11;
+                    break;
+                case 1.2F:
+                    SecurityProtocol = SecurityProtocolType.Tls12;
+                    break;
+                default:
+                    SecurityProtocol = SecurityProtocolType.Tls12;
+                    break;
+            }
+
             if (ADnsSetting.AllowSelfSignedCert)
             {
                 ServerCertificateValidationCallback +=
@@ -73,11 +97,6 @@ namespace AuroraDNS
             }
 
             Console.Clear();
-
-            if (!string.IsNullOrWhiteSpace(string.Join("",args)))
-                ReadConfig(args[0]);
-            if (File.Exists("config.json"))
-                ReadConfig("config.json");
 
             if (ADnsSetting.BlackListEnable)
             {
@@ -435,6 +454,8 @@ namespace AuroraDNS
 
             ADnsSetting.AllowSelfSignedCert = configJson.ToString().Contains("AllowSelfSignedCert") && configJson.AsObjectGetBool("AllowSelfSignedCert");
 
+            ADnsSetting.TlsVersion = configJson.ToString().Contains("TlsVersion") ? configJson.AsObjectGetFloat("Listen") : 0;
+
             ADnsSetting.EDnsCustomize = configJson.ToString().Contains("EDnsCustomize") && configJson.AsObjectGetBool("EDnsCustomize");
 
             ADnsSetting.DebugLog = configJson.ToString().Contains("DebugLog") && configJson.AsObjectGetBool("DebugLog");
@@ -468,6 +489,11 @@ namespace AuroraDNS
             if (ADnsSetting.AllowSelfSignedCert)
             {
                 Console.WriteLine(@"AllowSelfSignedCert : " + ADnsSetting.AllowSelfSignedCert);
+            }
+
+            if (ADnsSetting.TlsVersion != 0)
+            {
+                Console.WriteLine(@"TlsVersion : " + ADnsSetting.TlsVersion);
             }
 
             if (ADnsSetting.ProxyEnable)
