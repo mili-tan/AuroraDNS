@@ -390,17 +390,32 @@ namespace AuroraDNS.dotNetCore
         {
             Console.WriteLine(@"------Read Config-------");
 
-            JsonValue configJson = Json.Parse(File.ReadAllText(path));
-            ADnsSetting.ListenIp = configJson.ToString().Contains("Listen") ? IPAddress.Parse(configJson.AsObjectGetString("Listen")) : IPAddress.Any;
-            ADnsSetting.BlackListEnable = configJson.ToString().Contains("BlackList") && configJson.AsObjectGetBool("BlackList");
-            ADnsSetting.ChinaListEnable = configJson.ToString().Contains("ChinaList") && configJson.AsObjectGetBool("ChinaList");
-            ADnsSetting.WhiteListEnable = configJson.ToString().Contains("RewriteList") && configJson.AsObjectGetBool("RewriteList");
-            ADnsSetting.ProxyEnable = configJson.ToString().Contains("ProxyEnable") && configJson.AsObjectGetBool("ProxyEnable");
-            ADnsSetting.IPv6Enable = !configJson.ToString().Contains("IPv6Enable") || configJson.AsObjectGetBool("IPv6Enable");
-            ADnsSetting.AllowSelfSignedCert = configJson.ToString().Contains("AllowSelfSignedCert") && configJson.AsObjectGetBool("AllowSelfSignedCert");
-            ADnsSetting.EDnsCustomize = configJson.ToString().Contains("EDnsCustomize") && configJson.AsObjectGetBool("EDnsCustomize");
-            ADnsSetting.DebugLog = configJson.ToString().Contains("DebugLog") && configJson.AsObjectGetBool("DebugLog");
-            ADnsSetting.EDnsIp = configJson.ToString().Contains("EDnsClientIp") ? IPAddress.Parse(configJson.AsObjectGetString("EDnsClientIp")) : IPAddress.Any;
+            string jSrt = File.ReadAllText(path);
+            JsonValue configJson = Json.Parse(jSrt);
+
+            ADnsSetting.ListenIp = jSrt.Contains("Listen")
+                ? IPAddress.Parse(configJson.AsObjectGetString("Listen"))
+                : IPAddress.Any;
+            ADnsSetting.BlackListEnable =
+                jSrt.Contains("BlackList") && configJson.AsObjectGetBool("BlackList");
+            ADnsSetting.ChinaListEnable =
+                jSrt.Contains("ChinaList") && configJson.AsObjectGetBool("ChinaList");
+            ADnsSetting.WhiteListEnable =
+                jSrt.Contains("RewriteList") && configJson.AsObjectGetBool("RewriteList");
+            ADnsSetting.ProxyEnable =
+                jSrt.Contains("ProxyEnable") && configJson.AsObjectGetBool("ProxyEnable");
+            ADnsSetting.IPv6Enable =
+                !jSrt.Contains("IPv6Enable") || configJson.AsObjectGetBool("IPv6Enable");
+            ADnsSetting.AllowSelfSignedCert =
+                jSrt.Contains("AllowSelfSignedCert") && configJson.AsObjectGetBool("AllowSelfSignedCert");
+            ADnsSetting.EDnsCustomize =
+                jSrt.Contains("EDnsCustomize") && configJson.AsObjectGetBool("EDnsCustomize");
+            ADnsSetting.DebugLog =
+                jSrt.Contains("DebugLog") && configJson.AsObjectGetBool("DebugLog");
+
+            ADnsSetting.EDnsIp = jSrt.Contains("EDnsClientIp")
+                ? IPAddress.Parse(configJson.AsObjectGetString("EDnsClientIp"))
+                : IPAddress.Any;
 
             if (configJson.ToString().Contains("HttpsDns"))
             {

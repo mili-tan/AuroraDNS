@@ -2,7 +2,7 @@
   "Listen" : "0.0.0.0",
   "BlackList" : false,
   "RewriteList" : false,
-  "ChinaList" : false,
+  "ChinaList" : true,
   "DebugLog" : true,
   "EDnsCustomize" : false,
   "EDnsClientIp" : "0.0.0.0",
