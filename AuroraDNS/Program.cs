@@ -17,7 +17,6 @@ using static System.Net.ServicePointManager;
 
 namespace AuroraDNS
 {
-
     static class Program
     {
         private static IPAddress IntIPAddr;
@@ -58,7 +57,6 @@ namespace AuroraDNS
 
             Thread.Sleep(1500);
             Console.Clear();
-
             Console.WriteLine(Resource.ASCII);
 
             OriginColor = Console.ForegroundColor;
@@ -87,7 +85,6 @@ namespace AuroraDNS
             if (Thread.CurrentThread.CurrentCulture.Name == "zh-CN")
                 IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("http://members.3322.org/dyndns/getip")
                     .Trim());
-
             else
                 IntIPAddr = IPAddress.Parse(new WebClient().DownloadString("https://api.ipify.org").Trim());
 
@@ -363,10 +360,12 @@ namespace AuroraDNS
         public static List<dynamic> ResolveOverDNSPod(string domainName)
         {
             string dnsStr = new WebClient().DownloadString(
-                $"http://119.29.29.29/d?dn={domainName}");
-            var dnsAnswerList = dnsStr.Split(';');
+                $"http://119.29.29.29/d?dn={domainName}&ttl=1");
+            var ttlTime = Convert.ToInt32(dnsStr.Split(',')[1]);
+            var dnsAnswerList = dnsStr.Split(',')[0].Split(';');
 
-            return dnsAnswerList.Select(item => new ARecord(DomainName.Parse(domainName), 600, IPAddress.Parse(item)))
+            return dnsAnswerList
+                .Select(item => new ARecord(DomainName.Parse(domainName), ttlTime, IPAddress.Parse(item)))
                 .Cast<dynamic>().ToList();
         }
 
@@ -432,7 +431,7 @@ namespace AuroraDNS
             Console.WriteLine(@"Listen        : " + ADnsSetting.ListenIp);
             Console.WriteLine(@"BlackList     : " + ADnsSetting.BlackListEnable);
             Console.WriteLine(@"RewriteList   : " + ADnsSetting.WhiteListEnable);
-            Console.WriteLine(@"ChinaList     : " + ADnsSetting.WhiteListEnable);
+            Console.WriteLine(@"ChinaList     : " + ADnsSetting.ChinaListEnable);
             Console.WriteLine(@"ProxyEnable   : " + ADnsSetting.ProxyEnable);
             Console.WriteLine(@"IPv6Enable    : " + ADnsSetting.IPv6Enable);
             Console.WriteLine(@"DebugLog      : " + ADnsSetting.DebugLog);
