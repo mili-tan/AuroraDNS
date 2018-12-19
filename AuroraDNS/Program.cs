@@ -196,7 +196,9 @@ namespace AuroraDNS
 
                         if (ADnsSetting.ChinaListEnable && dnsQuestion.RecordType == RecordType.A)
                         {
-                            if (ChinaList.Contains(dnsQuestion.Name) || dnsQuestion.Name.ToString().Contains(".cn") ||
+                            var domainSplit = dnsQuestion.Name.ToString().TrimEnd('.').Split('.');
+                            var nameStr = $"{domainSplit[domainSplit.Length - 2]}.{domainSplit[domainSplit.Length - 1]}";
+                            if (ChinaList.Contains(DomainName.Parse(nameStr)) || dnsQuestion.Name.ToString().Contains(".cn") ||
                                 dnsQuestion.Name.ToString().Contains(".xn--"))
                             {
                                 var resolvedDnsList = ResolveOverDNSPod(dnsQuestion.Name.ToString());
@@ -206,7 +208,7 @@ namespace AuroraDNS
                                 else
                                     response.ReturnCode = ReturnCode.NxDomain;
 
-                                Console.WriteLine(@"|- ChinaList - DNSPOD");
+                                Console.WriteLine(@"|- ChinaList - DNSPOD D+");
                             }
                         }
 
@@ -246,7 +248,6 @@ namespace AuroraDNS
             }
 
             e.Response = response;
-
         }
 
         private static (List<dynamic> list, int statusCode) ResolveOverHttps(string clientIpAddress, string domainName,
@@ -358,6 +359,9 @@ namespace AuroraDNS
         {
             string dnsStr = new WebClient().DownloadString(
                 $"http://119.29.29.29/d?dn={domainName}&ttl=1");
+            if (string.IsNullOrWhiteSpace(dnsStr))
+                return null;
+            
             var ttlTime = Convert.ToInt32(dnsStr.Split(',')[1]);
             var dnsAnswerList = dnsStr.Split(',')[0].Split(';');
 
