@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Caching;
 using System.Threading;
 using System.Threading.Tasks;
 using ARSoft.Tools.Net;
@@ -44,6 +45,7 @@ namespace AuroraDNS
             public static bool BlackListEnable;
             public static bool ChinaListEnable = true;
             public static bool WhiteListEnable;
+            public static bool DnsCacheEnable = true;
             public static bool AllowSelfSignedCert;
             public static WebProxy WProxy = new WebProxy("127.0.0.1:1080");
         }
@@ -183,6 +185,18 @@ namespace AuroraDNS
                         if (ADnsSetting.DebugLog)
                             Console.WriteLine(
                                 $@"| {DateTime.Now} {clientAddress} : {dnsQuestion.Name} | {dnsQuestion.RecordType.ToString().ToUpper()}");
+
+                        if (ADnsSetting.DnsCacheEnable && MemoryCache.Default.Contains($"{dnsQuestion.Name}{dnsQuestion.RecordType}"))
+                        {
+                            response.AnswerRecords.AddRange(
+                                (List<DnsRecordBase>)MemoryCache.Default.Get($"{dnsQuestion.Name}{dnsQuestion.RecordType}"));
+                            response.AnswerRecords.Add(new TxtRecord(DomainName.Parse("cache.auroradns.mili.one"), 0,
+                                "AuroraDNSC Cached"));
+
+                            if (ADnsSetting.DebugLog)
+                                Console.WriteLine
+                                    ($@"|- CacheContains : {dnsQuestion.Name} | Count : {MemoryCache.Default.Count()}");
+                        }
 
                         if (ADnsSetting.BlackListEnable && BlackList.Contains(dnsQuestion.Name) &&
                             dnsQuestion.RecordType == RecordType.A)
