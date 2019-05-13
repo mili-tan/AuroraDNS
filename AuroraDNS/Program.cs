@@ -244,6 +244,11 @@ namespace AuroraDNS
                                 dnsQuestion.Name.ToString(),
                                 ADnsSetting.ProxyEnable, ADnsSetting.WProxy, dnsQuestion.RecordType);
 
+                            var cacheItem = new CacheItem($"{dnsQuestion.Name}{dnsQuestion.RecordType}", resolvedDnsList);
+                            if (!MemoryCache.Default.Contains(cacheItem.Key))
+                                MemoryCache.Default.Add(cacheItem,
+                                    new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.Now + TimeSpan.FromSeconds(resolvedDnsList[0].TimeToLive) });
+
                             if (resolvedDnsList != null && resolvedDnsList != new List<dynamic>())
                                 foreach (var item in resolvedDnsList)
                                     response.AnswerRecords.Add(item);
